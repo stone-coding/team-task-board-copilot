@@ -1,0 +1,14 @@
+Implement GitHub issue #6 in this repository: "Build three-column Kanban board with mock data".
+
+Required functionality:
+- A board page at /projects/[projectId]; /projects/demo shows the demo project's tasks from src/lib/mock-tasks.ts
+- To Do, In Progress, and Done columns
+- Tasks displayed in the correct column
+- Status changes using an accessible dropdown
+- Empty-state handling
+- Responsive layout
+- Basic component tests
+
+Product requirements: docs/prd.md (US4). Design reference: docs/mockups/board.png.
+
+Work autonomously until the feature is complete, commit your work with git, and finish with a short summary.

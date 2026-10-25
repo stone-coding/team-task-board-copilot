@@ -1,0 +1,23 @@
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 434190e..9d8ed41 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -69,9 +69,15 @@ body {
+   border-radius: 10px;
+ }
+ 
+-.board-column-todo { --accent: var(--todo); }
+-.board-column-progress { --accent: var(--progress); }
+-.board-column-done { --accent: var(--done); }
++.board-column-todo {
++  --accent: var(--todo);
++}
++.board-column-progress {
++  --accent: var(--progress);
++}
++.board-column-done {
++  --accent: var(--done);
++}
+ 
+ .board-column h2 {
+   display: flex;

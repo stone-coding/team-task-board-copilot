@@ -1,0 +1,5 @@
+ src/app/globals.css                    | 159 ++++++++++++++++++++++++++++++---
+ src/app/projects/[projectId]/board.tsx |  90 +++++++++++++++++++
+ src/app/projects/[projectId]/page.tsx  |  21 +++++
+ tests/unit/board.test.tsx              |  32 +++++++
+ 4 files changed, 292 insertions(+), 10 deletions(-)

@@ -1,0 +1,8 @@
+A	e2e/board.spec.ts
+M	src/app/globals.css
+A	src/app/projects/[projectId]/page.tsx
+A	src/components/board/Board.tsx
+A	src/components/board/BoardColumn.tsx
+A	src/components/board/TaskCard.tsx
+A	src/lib/task-status.ts
+A	tests/unit/board.test.tsx

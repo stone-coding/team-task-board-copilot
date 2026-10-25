@@ -1,0 +1,9 @@
+ e2e/board.spec.ts                     | 25 +++++++++++++++++++
+ src/app/globals.css                   | 12 ++-------
+ src/app/projects/[projectId]/page.tsx | 38 ++++++++++++++++++++++++++++
+ src/components/board/Board.tsx        | 33 ++++++++++++++++++++++++
+ src/components/board/BoardColumn.tsx  | 47 +++++++++++++++++++++++++++++++++++
+ src/components/board/TaskCard.tsx     | 38 ++++++++++++++++++++++++++++
+ src/lib/task-status.ts                |  9 +++++++
+ tests/unit/board.test.tsx             | 39 +++++++++++++++++++++++++++++
+ 8 files changed, 231 insertions(+), 10 deletions(-)

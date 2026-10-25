@@ -1,0 +1,16 @@
+
+Running 11 tests using 1 worker
+
+  ✓   1 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:102:7 › US4 board — hidden acceptance › AC1: shows To Do, In Progress, Done column headings in order (231ms)
+  ✓   2 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:109:7 › US4 board — hidden acceptance › AC2: each mock task is in the column matching its status (92ms)
+  ✓   3 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:116:7 › US4 board — hidden acceptance › AC3: each column header shows its task count (3 / 2 / 0) (86ms)
+  ✓   4 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:123:7 › US4 board — hidden acceptance › AC4: each card has a status dropdown whose accessible name identifies the task (393ms)
+  ✓   5 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:130:7 › US4 board — hidden acceptance › AC5: changing status moves the card immediately and updates counts (121ms)
+  ✓   6 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:139:7 › US4 board — hidden acceptance › AC6: an empty column shows 'No tasks yet' (initially Done, then emptied In Progress) (132ms)
+  ✓   7 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:149:7 › US4 board — hidden acceptance › AC7: columns are side by side at 1280px (84ms)
+  ✓   8 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:158:7 › US4 board — hidden acceptance › AC8: columns stack and there is no horizontal page scroll at 375px (90ms)
+  ✓   9 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:170:7 › US4 board — hidden acceptance › Mockup: page h1 shows the project name (100ms)
+  ✓  10 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:174:7 › US4 board — hidden acceptance › A11y: no serious or critical axe violations (WCAG 2 A/AA) (378ms)
+  ✓  11 [chromium] › .hw3-eval-tmp/acceptance.spec.ts:189:7 › US4 board — hidden acceptance › Evidence: screenshots at 1280px and 375px (always passes) (169ms)
+
+  11 passed (3.4s)

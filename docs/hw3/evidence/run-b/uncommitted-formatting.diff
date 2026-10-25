@@ -1,0 +1,62 @@
+diff --git a/e2e/board.spec.ts b/e2e/board.spec.ts
+index dc63f8f..84423a9 100644
+--- a/e2e/board.spec.ts
++++ b/e2e/board.spec.ts
+@@ -3,23 +3,37 @@ import { expect, test } from "@playwright/test";
+ test("demo board displays columns and moves a task", async ({ page }) => {
+   await page.goto("/projects/demo");
+ 
+-  await expect(page.getByRole("heading", { name: "Demo Project" })).toBeVisible();
++  await expect(
++    page.getByRole("heading", { name: "Demo Project" }),
++  ).toBeVisible();
+   await expect(page.getByRole("region", { name: "To Do" })).toContainText("3");
+-  await expect(page.getByRole("region", { name: "In Progress" })).toContainText("2");
+-  await expect(page.getByRole("region", { name: "Done" })).toContainText("No tasks yet");
++  await expect(page.getByRole("region", { name: "In Progress" })).toContainText(
++    "2",
++  );
++  await expect(page.getByRole("region", { name: "Done" })).toContainText(
++    "No tasks yet",
++  );
+ 
+   await page
+     .getByRole("combobox", { name: "Status for Draft onboarding checklist" })
+     .selectOption("IN_PROGRESS");
+ 
+   await expect(page.getByRole("region", { name: "To Do" })).toContainText("2");
+-  await expect(page.getByRole("region", { name: "In Progress" })).toContainText("3");
+-  await expect(page.getByRole("region", { name: "In Progress" })).toContainText("Draft onboarding checklist");
++  await expect(page.getByRole("region", { name: "In Progress" })).toContainText(
++    "3",
++  );
++  await expect(page.getByRole("region", { name: "In Progress" })).toContainText(
++    "Draft onboarding checklist",
++  );
+ });
+ 
+-test("demo board fits a 375px viewport without horizontal scrolling", async ({ page }) => {
++test("demo board fits a 375px viewport without horizontal scrolling", async ({
++  page,
++}) => {
+   await page.setViewportSize({ width: 375, height: 900 });
+   await page.goto("/projects/demo");
+ 
+-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+-});
+\ No newline at end of file
++  expect(
++    await page.evaluate(() => document.documentElement.scrollWidth),
++  ).toBeLessThanOrEqual(375);
++});
+diff --git a/src/lib/task-status.ts b/src/lib/task-status.ts
+index 677203a..a21e071 100644
+--- a/src/lib/task-status.ts
++++ b/src/lib/task-status.ts
+@@ -6,4 +6,4 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
+   TODO: "To Do",
+   IN_PROGRESS: "In Progress",
+   DONE: "Done",
+-};
+\ No newline at end of file
++};
