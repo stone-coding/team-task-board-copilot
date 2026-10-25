@@ -1,0 +1,89 @@
+<!doctype html>
+<!--
+  Team Task Board — static mockup of the project board (US4).
+  Source for docs/mockups/board.png (1280px) and board-mobile.png (375px).
+  This is a design reference only; it is not application code.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup – Project Board</title>
+<style>
+  :root {
+    --bg: #f4f4f5; --surface: #ffffff; --border: #e4e4e7; --text: #18181b;
+    --muted: #52525b; --todo: #64748b; --progress: #2563eb; --done: #16a34a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px; }
+  header .inner { max-width: 1200px; margin: 0 auto; }
+  .crumb { color: var(--muted); font-size: 13px; }
+  h1 { margin: 4px 0 0; font-size: 22px; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  .board { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 768px) { .board { grid-template-columns: repeat(3, 1fr); } }
+  .column { background: #fafafa; border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px; border-top: 4px solid var(--accent); }
+  .column h2 { display: flex; align-items: center; justify-content: space-between;
+               margin: 0 0 12px; font-size: 15px; }
+  .count { background: var(--border); border-radius: 999px; padding: 1px 9px;
+           font-size: 12px; font-weight: 600; color: var(--muted); }
+  .cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .card h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .card p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .status { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  select { font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid #a1a1aa;
+           border-radius: 6px; background: #fff; color: var(--text); }
+  select:focus-visible { outline: 2px solid var(--progress); outline-offset: 2px; }
+  .empty { border: 1px dashed #a1a1aa; border-radius: 8px; padding: 20px 12px;
+           text-align: center; color: var(--muted); }
+  .note { max-width: 1200px; margin: 8px auto 24px; padding: 0 16px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header><div class="inner">
+  <div class="crumb">Projects / Demo Project</div>
+  <h1>Demo Project</h1>
+</div></header>
+
+<main>
+  <div class="board">
+    <section class="column" style="--accent: var(--todo)" aria-labelledby="col-todo">
+      <h2 id="col-todo">To Do <span class="count">3</span></h2>
+      <ul class="cards">
+        <li class="card"><h3>Draft onboarding checklist</h3><p>List the first-week steps for new teammates.</p>
+          <div class="status"><span aria-hidden="true">Status</span>
+            <select id="s1" aria-label="Status for Draft onboarding checklist"><option selected>To Do</option><option>In Progress</option><option>Done</option></select></div></li>
+        <li class="card"><h3>Collect design feedback</h3>
+          <div class="status"><span aria-hidden="true">Status</span>
+            <select id="s2" aria-label="Status for Collect design feedback"><option selected>To Do</option><option>In Progress</option><option>Done</option></select></div></li>
+        <li class="card"><h3>Write release notes</h3><p>Summarize changes for the next release.</p>
+          <div class="status"><span aria-hidden="true">Status</span>
+            <select id="s3" aria-label="Status for Write release notes"><option selected>To Do</option><option>In Progress</option><option>Done</option></select></div></li>
+      </ul>
+    </section>
+
+    <section class="column" style="--accent: var(--progress)" aria-labelledby="col-progress">
+      <h2 id="col-progress">In Progress <span class="count">2</span></h2>
+      <ul class="cards">
+        <li class="card"><h3>Set up project repository</h3>
+          <div class="status"><span aria-hidden="true">Status</span>
+            <select id="s4" aria-label="Status for Set up project repository"><option>To Do</option><option selected>In Progress</option><option>Done</option></select></div></li>
+        <li class="card"><h3>Review sprint backlog</h3><p>Confirm priorities with the team.</p>
+          <div class="status"><span aria-hidden="true">Status</span>
+            <select id="s5" aria-label="Status for Review sprint backlog"><option>To Do</option><option selected>In Progress</option><option>Done</option></select></div></li>
+      </ul>
+    </section>
+
+    <section class="column" style="--accent: var(--done)" aria-labelledby="col-done">
+      <h2 id="col-done">Done <span class="count">0</span></h2>
+      <div class="empty">No tasks yet</div>
+    </section>
+  </div>
+</main>
+<p class="note">Mockup notes: columns stack vertically below 768px. Each card's status control is a labelled native select; changing it moves the card to that column immediately and updates the counts.</p>
+</body>
+</html>

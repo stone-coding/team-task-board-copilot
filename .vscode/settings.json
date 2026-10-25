@@ -1,0 +1,9 @@
+{
+  // Experiment A (no rules): turn off every automatic source of AI instructions,
+  // so GitHub Copilot Chat sees only the prompt and the repository files.
+  "chat.useAgentsMdFile": false,
+  "chat.useNestedAgentsMdFiles": false,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": false,
+  "github.copilot.chat.codeGeneration.instructions": [],
+  "chat.instructionsFilesLocations": {}
+}
