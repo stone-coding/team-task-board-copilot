@@ -3,7 +3,7 @@
 <!--
   Rules for AI coding assistants (and humans) working in this repository.
   Owner: Haomiao Shi (personal HW3 version; the shared P2 version will be agreed with my partner).
-  Version: v1. See "Changelog" at the end.
+  Version: v2. See "Changelog" at the end.
   IDE workflow: Visual Studio Code with GitHub Copilot Chat. See "How the assistant receives these rules" in §11.
   Keep it short enough to be read in full. Every rule must match the real repository.
 -->
@@ -104,7 +104,7 @@ Key patterns:
 |---|---|
 | Page `/projects/[projectId]` | `<h1>` with the project name (mock project: "Demo Project"), breadcrumb "Projects / Demo Project", then the board |
 | `Board` | Renders the three columns in the order **To Do, In Progress, Done**. Holds the task list in state. A status change updates state immediately (no reload) |
-| `BoardColumn` | `<section aria-labelledby>` with an `<h2>` title and a count badge (pill) that shows the number of tasks. Cards are `<ul>`/`<li>`. Empty column shows a dashed box with the text **"No tasks yet"** |
+| `BoardColumn` | `<section aria-labelledby>` pointing at an `<h2>` that contains **only the column title**, so the region's accessible name is exactly "To Do" (not "To Do 3"). Put the count badge (pill) next to the heading, not inside it. Cards are `<ul>`/`<li>`. Empty column shows a dashed box with the text **"No tasks yet"** |
 | `TaskCard` | `<h3>` title, optional description in muted text, and a native `<select>` with options To Do / In Progress / Done. The select's accessible name is **"Status for {task title}"** (`aria-label`); the visible "Status" text is `aria-hidden` |
 
 Visual tokens from the mockup:
@@ -121,10 +121,12 @@ User flows:
 
 ## 6. Testing strategy and TDD
 
-- **Red → green → refactor for every feature issue:**
-  1. Write tests from the issue's acceptance criteria first and run them to see them fail. Commit as `test(#N): …`.
+- **Red → green → refactor for every feature issue, recorded as separate commits:**
+  0. Before editing anything, create the issue branch (`git switch -c feature/<N>-<slug>`, see §7).
+  1. Write tests from the issue's acceptance criteria and run them to see them fail. **Commit them immediately, on their own, as `test(#N): …`**, before writing any implementation. A failing test that is only run but never committed does not count.
   2. Write the minimum code to make them pass. Commit as `feat(#N): …`.
   3. Refactor with the tests still green. Commit as `refactor(#N): …` (optional).
+  - A feature delivered in a single commit violates this rule, even if the tests were written first.
 - **Each acceptance criterion maps to at least one test.** Name the test after the behavior it checks, for example `it("moves a card to Done when its status changes")`.
 - Component tests use Testing Library **queries by role, label, or text** (`getByRole("combobox", { name: "Status for …" })`), never CSS classes or test ids. Simulate the user with `userEvent`, not `fireEvent`.
 - Pure functions in `src/lib/` get their own unit tests, including edge cases (empty list, unknown id).
@@ -134,9 +136,13 @@ User flows:
 - Scratch output (screenshots, traces) goes only to the gitignored `test-results/` folder, never `/tmp` or other paths outside the repo.
 - **Definition of done:** these all pass locally:
   ```bash
-  npm run lint && npm run typecheck && npm test && npm run build
+  npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e
   ```
   `npm run build` matters because of the `cacheComponents` rule in §2.
+- **Structure checklist (also part of done):**
+  - Each state change the UI performs is a pure function in `src/lib/` (for the board, `src/lib/board.ts` with `moveTask`) with its own `*.test.ts`.
+  - Components live in `src/components/<feature>/`.
+  - Each test file sits next to the file it tests (`Board.test.tsx` beside `Board.tsx`), not in `tests/unit/`.
 
 ## 7. Git, issues, and pull requests
 
@@ -211,8 +217,21 @@ Avoid unless an issue explicitly approves it (explain why in the PR):
 4. **No new dependencies.** If you think one is needed, stop and explain why.
 5. **Verify before claiming done.** Run the full definition-of-done command from §6 and report the real output. Never claim a check passed if you did not run it.
 6. **If the spec is ambiguous,** choose the option closest to the mockup and state the assumption in your summary.
-7. **Finish with a summary** that has: files changed, the acceptance-criteria checklist (each item checked or not), the commands you ran with their results, and the final line `Rules: AGENTS.md v1`.
+7. **Finish with a summary** that has:
+   - the branch name and every commit SHA, with the `test(#N)` commit listed before the `feat(#N)` commit
+   - files changed
+   - the acceptance-criteria checklist, with each item checked or not
+   - the commands you ran and their results
+   - the final line `Rules: AGENTS.md v2`
+8. **Terminal:** the shell is zsh. Quote paths that contain brackets (`'src/app/projects/[projectId]/page.tsx'`). `rg` is not installed; use `git ls-files` or `grep`.
 
 ## Changelog
 
+- **v2:** revised from the GitHub Copilot Chat before/after experiment (run B used v1):
+  - Run B wrote its tests first but committed everything in one commit, and stayed on the checkout branch. The TDD rule now requires a separate `test(#N)` commit and creating the issue branch first.
+  - Run B kept state logic inside the component and put its tests in `tests/unit/`. The pure, tested `src/lib/board.ts` function and co-located tests are now part of done.
+  - Run B's first test failure came from the count badge sitting inside the column heading. §5 now says where the badge goes.
+  - Run B's `rg` and zsh glob errors led to the new terminal rule (§11.8).
+  - The definition of done now includes the E2E suite.
+  - The summary must list the branch and commit SHAs.
 - **v1:** initial rules for the Visual Studio Code + GitHub Copilot Chat workflow.
