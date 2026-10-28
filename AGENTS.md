@@ -1,6 +1,6 @@
 # AGENTS.md — Team Task Board
 
-<!-- Rules for AI assistants and humans. Owner: Tyler Sarna · v2 (§12). Tool: VS Code + Copilot Chat (§11).
+<!-- Rules for AI assistants and humans. Owner: Tyler Sarna · v3 (§12). Tool: VS Code + Copilot Chat (§11).
      Loads on every request: keep under ~200 lines, link to docs/ instead of pasting. Change via its own PR; revisit at each retro. -->
 
 ## 0. Quick reference (read this first)
@@ -22,8 +22,8 @@ npm run lint && npm run typecheck && npm test && npm run build && npm run test:e
 ```
 
 **Boundaries**
-- ✅ **Always:** one fresh chat per issue; work on a feature branch; plan before editing (R0); follow red → green (§6); run the definition of done before claiming done; reuse types from `src/lib/`.
-- ⚠️ **Ask first:** adding or upgrading any dependency not approved for the issue (§2); any command that downloads something (`npm install <pkg>`, `npx` of a tool that is not installed, `npx playwright install`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.*`, `playwright.config.ts`, `prisma.config.ts`, `package.json` scripts, `.vscode/`); calling `gh` or other network tools; anything outside the issue's scope.
+- ✅ **Always:** one fresh chat per issue; read the issue body first (§7); work on a feature branch; plan before editing and commit the failing test first (R0, R3); run the definition of done before claiming done; reuse types from `src/lib/`.
+- ⚠️ **Ask first:** adding or upgrading any dependency not approved for the issue (§2); any other command that downloads something (`npx` of a tool or runtime that is not installed, such as `npx node@22`, `brew install`, `npx playwright install`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.*`, `playwright.config.ts`, `prisma.config.ts`, `package.json` scripts, `.vscode/`); calling `gh` or other network tools, except reading the issue you are implementing (`gh issue view N` or the GitHub MCP issue tool, read-only); anything outside the issue's scope.
 - 🚫 **Never:** commit to or push to `main`; push, open, or merge PRs; amend, rebase, or squash the failing-test commit (it is graded evidence); skip, delete, or weaken a test to make it pass (`.skip`, `.only`, changed expectations); add `@ts-ignore`, `@ts-expect-error`, or `eslint-disable`; read, print, or commit `.env*` files (except `.env.example`); edit `src/generated/`; use `dangerouslySetInnerHTML`.
 
 ## 1. Project overview
@@ -44,13 +44,18 @@ through **To Do → In Progress → Done**. CS6983 pair project. Sprint 1: Oct 2
 | Language | typescript (strict) | 5.9.3 |
 | Styling | tailwindcss v4 (CSS-first config in `src/app/globals.css`) | 4.3.3 |
 | Lint | eslint / eslint-config-next | 9.39.5 / 16.4.3 |
-| Database | prisma, @prisma/client (PostgreSQL), dotenv | 7.10.1, 7.10.1, 18.0.9 |
+| Database (added by #1) | prisma, @prisma/client, @prisma/adapter-pg (PostgreSQL), dotenv | 7.10.1 (all three Prisma packages), 18.0.9 |
 | Unit + component tests | vitest, jsdom, @testing-library/react, @testing-library/user-event, @testing-library/jest-dom | 5.0.5, 30.1.3, 16.3.3, 14.6.8, 7.0.1 |
 | E2E | @playwright/test (Chromium) | 1.64.1 |
 
-**Approved dependencies per issue** (anything else: stop and ask): #2 `@vitest/coverage-v8`; #4 `zod`, `jose`, `bcryptjs`. Do not import a package before its issue.
+**Approved dependencies per issue** (install these for your issue without asking, at the versions above; anything else: stop and ask): #1 `@prisma/client`, `@prisma/adapter-pg`, and dev `prisma`, `dotenv`; #2 `@vitest/coverage-v8`; #4 `zod`, `jose`, `bcryptjs`. Do not import a package before its issue.
 
-**Prisma:** schema in `prisma/schema.prisma`, migrations in `prisma/migrations/` (create with `npx prisma migrate dev --name <slug>`; never hand-edit an applied migration). The client is generated into `src/generated/prisma/` (gitignored) by `npx prisma generate`. `DATABASE_URL` comes from `.env`; `.env.example` lists names only.
+**Prisma 7** (your training data is probably Prisma 5/6):
+- Generator `provider = "prisma-client"` with `output = "../src/generated/prisma"`. Never the legacy `prisma-client-js`: it writes JS into `src/` and `npm run lint` fails. Import the client from `@/generated/prisma/client`.
+- No `url` in `schema.prisma`. `prisma.config.ts` starts with `import "dotenv/config"` (Prisma 7 does not read `.env` itself) and sets `datasource.url`.
+- `PrismaClient` needs a driver adapter, or it throws when created: `new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) })`. `src/server/db.ts` exports one client, cached on `globalThis` outside production.
+- Migrations live in `prisma/migrations/` with `migration_lock.toml`. Use `npx prisma migrate dev --name <slug>` with a database; without one, write the SQL with `npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script`. Never hand-edit an applied migration.
+- `src/generated/prisma/` is gitignored; regenerate with `npx prisma generate`. `.env.example` lists names only.
 
 ### Next.js 16 specifics (your training data is probably older)
 - Docs for this exact version are in `node_modules/next/dist/docs/`. Read them before using an API you are unsure about.
@@ -141,7 +146,7 @@ Rules:
   expect(within(done).getByRole("heading", { name: "Write PRD" })).toBeInTheDocument();
   ```
 - Pure functions in `src/lib/` get unit tests including edge cases (empty list, unknown id, same-status move).
-- **Database:** schema tests check *every* field and constraint in PRD §6, not just a sample, and the schema must also pass `npx prisma validate`. API issues test error paths: empty input, invalid input, unknown or other user's id.
+- **Database:** schema tests check *every* field and constraint in PRD §6, not just a sample, and the schema must also pass `npx prisma validate`. A unit test imports `src/server/db.ts` and constructs the client (no live database needed), so a missing driver adapter fails the suite instead of failing at runtime. API issues test error paths: empty input, invalid input, unknown or other user's id.
 - **E2E:** every UI feature issue adds or extends `e2e/<feature>.spec.ts` for its main flow; layout work includes the 375px no-horizontal-scroll check. Commit the spec with the feature. E2E covers journeys, not every branch.
 - Coverage target 80%+ lines in `src/lib` and `src/components` (measured once #2 adds `@vitest/coverage-v8`).
 
@@ -155,23 +160,23 @@ Rules:
 - **Sprint notes:** `docs/sprints/sprint-N/` holds `planning.md` (goal, issues, estimates, PO/SM), standups (3+ per partner per sprint), and `retro.md`. The AI may draft standups from `git log`; a human posts them.
 
 ### Backlog map (use only these numbers; never guess)
-| # | Issue | Sprint | Acceptance criteria from |
+**The issue body is the source of acceptance criteria for every issue.** Read it first (allowed without asking, §0) and copy its checklist into your plan. The PRD column below is extra context only; it never replaces the issue's checklist. If the issue and PRD disagree, ask. If you cannot read the issue, ask the human to paste it. Do not invent criteria.
+
+| # | Issue | Sprint | PRD context |
 |---|---|---|---|
-| 1 | Set up Prisma with PostgreSQL schema | 1 | PRD §6 data model |
-| 2 | CI pipeline (lint, typecheck, unit, E2E) | 1 | Issue body (infrastructure) |
-| 3 | Vercel deployment with previews and Neon | 1 | Issue body; PRD §7 |
+| 1 | Set up Prisma with PostgreSQL schema | 1 | §6 data model |
+| 2 | CI pipeline (lint, typecheck, unit, E2E) | 1 | — (infrastructure) |
+| 3 | Vercel deployment with previews and Neon | 1 | §7 |
 | 4 | Registration and login with JWT | 1 | US1 |
 | 5 | Projects API and projects list page | 1 | US2 |
 | 6 | Three-column Kanban board with mock data | 1 | US4 (all but the Sprint 2 item) |
 | 7 | Tasks CRUD API | 2 | US3; US5 error shape |
 | 8 | Connect board to tasks API (optimistic updates) | 2 | US4 Sprint 2 item |
 | 9 | Task create/edit/delete UI | 2 | US3 |
-| 10 | Security scanning (CodeQL, npm audit, Dependabot) | 2 | Issue body (infrastructure) |
+| 10 | Security scanning (CodeQL, npm audit, Dependabot) | 2 | — (infrastructure) |
 | 11 | OpenAPI docs at /api/docs | 2 | US5 |
-| 12 | E2E test for the core journey | 2 | §5 flows 1–4 |
-| 13 | README, diagrams, setup guide | 2 | Issue body (docs) |
-
-For "Issue body" rows, ask the human to paste the issue's acceptance criteria. Do not invent criteria.
+| 12 | E2E test for the core journey | 2 | AGENTS.md §5 flows 1–4 |
+| 13 | README, diagrams, setup guide | 2 | — (docs) |
 
 ## 8. Libraries: prefer and avoid
 Prefer React state and hooks, Next.js built-ins (`next/link`, route handlers), Tailwind, native HTML elements, `fetch`, Prisma for all database access, and the test libraries in §2.
@@ -198,15 +203,16 @@ Avoid unless an issue approves it (and the PR explains why): UI kits (MUI, Chakr
 
 **Assistant:** start your first reply by listing the sections and rules that apply (for example "§2, §5, §6, R0–R7"). Then:
 
-- **R0 Plan first.** Before changing files, list the files you will create or edit and any package or command that downloads something, then wait for approval.
+- **R0 Plan, then stop.** Your first reply changes no files, even if the prompt says "implement". It contains: the issue's acceptance-criteria checklist (from the issue body), the test that will cover each criterion, the files you will create or edit, and the packages you will install. End it with "Waiting for approval." and stop.
 - **R1 Scope.** Implement only the given issue. No unrelated refactors, renames, or config changes (see §0 boundaries).
-- **R2 Read first.** The criteria source for the issue (§7 map), `DESIGN.md` for UI work, `src/lib/tasks.ts`, `src/lib/mock-tasks.ts`, and `src/lib/task-status.ts` once it exists. Reuse existing types; never redefine `Task` or `TaskStatus`.
-- **R3 TDD.** Follow §6. Show the failing test output before writing the implementation, and commit it separately.
+- **R2 Read first.** The issue body (§7), `DESIGN.md` for UI work, `src/lib/tasks.ts`, `src/lib/mock-tasks.ts`, and `src/lib/task-status.ts` once it exists. Reuse existing types; never redefine `Task` or `TaskStatus`.
+- **R3 Test-first gate.** After approval, your first commit is `test(#N): …`, made after you show its failing output (§6). Before that commit you may install the approved packages, but you must not create or edit any implementation file. This applies to infrastructure and `chore` issues too: #1 tests the schema, migration, `.env.example`, and that `src/server/db.ts` constructs a client. Docs-only issues are the one exception.
 - **R4 Dependencies.** Only those approved for the issue in §2. If you think another is needed, stop and explain why.
 - **R5 Verify.** Run the full definition of done (§0) and paste the real result of each command. Never say a check passed unless you ran it in this session. If a check cannot run because of the environment (Node version, missing browser, no database), say so and stop; never report it as passing. If a fix is outside the issue's scope, stop and report.
 - **R6 Ambiguity.** Pick the option closest to `DESIGN.md`, the mockup, and the PRD and state the assumption. If they contradict each other, or the choice affects data shape or the API, ask instead.
 - **R7 Summary.** End with: files changed; acceptance-criteria checklist (each item checked or not, with the test that covers it); commands run with results; commit SHAs (test and feat); assumptions; and the last line `Rules: AGENTS.md`.
 
 ## 12. Changelog
+- **v3 (2026-10-28)**: from the clean #1 rerun (rules run met 3/6 issue criteria, the no-rules run 5/6). The issue body is now the criteria source for every issue, and reading it is allowed without asking. R0 now ends the first reply with a plan only, and R3 makes the failing-test commit a hard gate. Approved #1 packages, including the Prisma 7 driver adapter. Added Prisma 7 rules (`prisma-client` generator, which keeps lint passing; `dotenv/config`; adapter; migrations without a database) and a test that the db client constructs.
 - **v2 (2026-10-28)** — from the #1 with/without-rules experiment and Weeks 6–8: moved the visual spec to `DESIGN.md`; added the Node ≥ 22.12 requirement, Prisma commands, and approved dependencies per issue; marked planned files; filled the backlog criteria map; added R0 plan-first, the commit-body rule, schema test depth, the environment-failure rule, PR self-review, pair and sprint-notes rules, and the `.vscode` / CLAUDE.md setup checks; resolved all open verification markers.
 - **v1 (2026-10-27)** — first version, used for the #1 experiment.
