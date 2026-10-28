@@ -1,105 +1,114 @@
 # HW3 Before/After: Issue #1 with and without AGENTS.md
 
-**Author:** Tyler Sarna · **Tool:** GitHub Copilot Chat (agent mode, VS Code) · **Date:** Oct 27, 2026
+**Author:** Tyler Sarna · **Tool:** GitHub Copilot Chat (agent, model `auto`), VS Code · **Date:** Oct 27–28, 2026
+**Feature:** Issue #1, "Set up Prisma with PostgreSQL schema for users, projects, and tasks" (Sprint 1, labels `chore`, `priority:high`)
 
-| | Without rules | With rules |
+| | Without rules | With rules (AGENTS.md v3) |
 |---|---|---|
-| Branch | `sarna-no-rules` | `sarna-rules-experiment` |
-| Commits | `f89168d` | `8502947` (AGENTS.md), `e5aa018` (red test), `a6e27d5` (green) |
-| Base | `4b438ae` scaffold | `4b438ae` scaffold |
-
-> **Status: preliminary, experiments must be rerun.** This run had two flaws (see §1): both runs shared one Copilot chat, and `.vscode/settings.json` still had `"chat.useAgentsMdFile": false` during the with-rules run, so Copilot did not load AGENTS.md automatically. Both are now fixed (AGENTS.md v2 and the setting set to `true`). Rerun both experiments, each in its own fresh chat, before submitting the final comparison.
-
-Both branches start from the same scaffold commit. The feature is **Issue #1, "Set up Prisma with PostgreSQL schema"** (Sprint 1). Its acceptance criteria come from the data model in PRD §6.
+| Branch | `feature/1-prisma-postgres` | `feature/1-prisma-postgres-tdd` |
+| Commits | `adc7056` | `6bb4763` (red test), `901ebb4` (green) |
+| Rules file | none | `AGENTS.md` v3, commit `749a5cb` on `sarna-rules-experiment` |
 
 ## 1. Methodology
 
-1. **Run A (no rules).** AGENTS.md was removed from the working tree. Copilot got a brief description of Issue #1 and implemented it. The result was committed as `f89168d`.
-2. **Reset.** The Prisma changes were reverted so the tree matched the scaffold again.
-3. **Run B (rules).** AGENTS.md was added (`8502947`) and Copilot got the same issue. AGENTS.md was the only new input.
-4. **Evaluate.** I compared the two branches with `git diff`. I also ran lint, typecheck, and build on the with-rules branch. The application code is identical on both branches (see §2), so those results apply to both.
+It took three rounds to get a clean comparison. Rounds 1 and 2 were flawed, and fixing those flaws is part of the iteration story (§5).
 
-**Threat to validity (be honest about this).** Copilot's checkpoint refs (`refs/agents/4e805c6f-…/checkpoints/turn/1…11`) show that both runs happened in **one** agent session. Turns 1–5 were Run A, turn 6 reverted it, turn 7 added AGENTS.md, and turns 8–11 were Run B. The assignment asks for a fresh chat for each run. Because the chat was shared, Run B could see Run A's conversation, and that is the most likely reason the Prisma files match byte for byte. That includes the migration folder name `20261027195700_init`, a timestamp from Run A. So this comparison measures **how the rules changed the process**, not two independent implementations. 
+**Final round (the one compared below):**
 
-**Second threat: the rules may not have been loaded.** Since the scaffold commit, `.vscode/settings.json` had `"chat.useAgentsMdFile": false`, which is the no-rules setting, and it was never switched for Run B. Unless AGENTS.md was attached by hand with *Add Context* (check the chat export's *References*), Copilot saw AGENTS.md only as an ordinary repository file, not as always-loaded instructions. So "AGENTS.md was the only new input" overstates how controlled the run was.
-
-**Rerun plan.**
-1. Run A: set `"chat.useAgentsMdFile": false`, open a fresh chat, start from `4b438ae`, give the same brief prompt for Issue #1, and save the chat export.
-2. Run B: set `"chat.useAgentsMdFile": true`, reload the VS Code window, and open a **new** chat from `4b438ae` with AGENTS.md v2 in place. Confirm AGENTS.md appears under *References* and save the chat export.
-3. Use Node ≥ 22.12 so `npm test` runs, and record the full definition-of-done output for both branches.
-
-## 2. What is identical
-
-`git diff sarna-no-rules sarna-rules-experiment -- prisma prisma.config.ts package.json package-lock.json .env.example` produces no output. Both branches have the same:
-
-- `prisma/schema.prisma`: `User`, `Project`, and `Task` models with `cuid()` ids, a `TaskStatus` enum (`TODO | IN_PROGRESS | DONE`, default `TODO`), cascade deletes, and `@@index([projectId, status])`. This matches PRD §6 exactly.
-- Migration `prisma/migrations/20261027195700_init/migration.sql`, `prisma.config.ts`, `.env.example`, and the dependencies `@prisma/client`, `prisma`, and `dotenv` (^7.10.1 / ^18.0.9).
-
-Schema quality was good in both runs because the PRD's data model was in the repo either way. The rules did not change *what* was built.
-
-## 3. What differs
-
-`git diff --stat sarna-no-rules sarna-rules-experiment` (with the later `.gitignore` housekeeping excluded):
-
-```
- AGENTS.md                        | 233 +++
- README.md                        |   2 +-
- tests/unit/prisma-schema.test.ts |  54 +++
-```
-
-| Criterion (from the HW3 rubric) | Without rules | With rules | Rule that drove it |
-|---|---|---|---|
-| **Tests generated** | 0 tests | 4 tests, 21 assertions in `tests/unit/prisma-schema.test.ts` | §6, R3 |
-| **TDD red → green history** | One combined `feat` commit | `test(#1)` commit `e5aa018` before `feat(#1)` commit `a6e27d5` | §6, R3 |
-| **Test fails for the right reason** | n/a | Yes. At `e5aa018` there is no `prisma/` folder. `readIfPresent()` returns `""`, so every `toMatch` fails as an assertion instead of crashing on a missing file. | §6 "fail for the right reason" |
-| **Test conventions** | n/a | `describe/it/expect` imported from `"vitest"` (globals off). Cross-module test placed in `tests/unit/`. Tests named after behavior ("defines the three task statuses and defaults new tasks to TODO"). | §6 |
-| **Commit format** | `feat(#1): …`, but the body contains literal `\n\n` escape text | Conventional Commits with `Refs #1` on real separate lines | §7 |
-| **Docs** | README database section | Same section, plus "requires Node.js 20.19 or later" | R5 / setup |
-| **Secrets handling** | `.env*` ignored, `!.env.example` added | Same | §9 |
-| **Dependency policy** | Added 3 packages without asking (no rule existed) | Added the same 3 packages. AGENTS.md says to ask before adding a dependency ("Ask first"). The chat log should show whether it asked; Issue #1 approves Prisma, but `dotenv` is not on the planned list. | §0, R4 |
-
-### Measured improvement
-
-| Metric | No rules | Rules |
+| Condition | No rules | Rules |
 |---|---|---|
-| Unit tests for the PRD §6 schema | 0 | 4 (21 assertions) |
-| PRD §6 constraints asserted (unique email, enum + default, both cascades, composite index, optional description, `@updatedAt`) | 0 | all |
-| PRD §6 fields *not* asserted | all | `User.name`, `Project.name`, `Task.title`, every `createdAt` |
-| Separate failing-test commit (graded evidence) | No | Yes (`e5aa018`) |
-| Commits that follow §7 formatting | 0 / 1 | 2 / 2 feature commits |
-| `npm run lint` | pass (same code) | pass |
-| `npm run typecheck` | pass (same code) | pass |
-| `npm run build` | pass (same code) | pass |
+| Start point | New git worktree at scaffold `4b438ae` | New git worktree at scaffold `4b438ae` |
+| Rules input | No AGENTS.md; `"chat.useAgentsMdFile": false` | AGENTS.md v3 (uncommitted); `"chat.useAgentsMdFile": true` |
+| Chat | Brand-new chat in that folder | Brand-new chat in that folder |
+| Mode and model | Plan mode, `auto` | Plan mode, `auto` |
+| Prompt | "Lets come up with a plan to implement Issue 1" | identical |
+| Follow-ups | Approve plan; "commit this to github" | Approve plan; "Add the AGENTS.md file to tracking and commit to Github" |
+| Verified | Copilot's session log shows no AGENTS.md text in the instructions | Session log shows v3 text in the instructions ("R3 Test-first gate") |
 
-### Snippet: the new behavior with rules
+Afterwards I re-ran every check on both branches with Node 22.23.4. I also checked the acceptance criteria against the GitHub issue body, which both agents read.
 
+**Earlier rounds (discarded):**
+
+| Round | Branches | Why it was discarded |
+|---|---|---|
+| 1 (Oct 27) | `sarna-no-rules` vs `sarna-rules-experiment` | Both runs were in one chat, and `chat.useAgentsMdFile` was still `false` for the rules run. The Prisma code came out byte-identical. |
+| 2 (Oct 28) | `feature/1-prisma-schema-reimplementation` vs `feature/1-prisma` | The "no-rules" chat began with AGENTS.md v2 loaded and read the round-1 commits. The v2 rules run was clean, but met only 3/6 criteria. Its failures shaped v3. |
+
+## 2. Results against Issue #1's acceptance criteria
+
+| Acceptance criterion (from the issue) | No rules | Rules v3 |
+|---|---|---|
+| Prisma installed; schema matches PRD §6 | ✅ | ✅ |
+| Project→User and Task→Project cascade; `(projectId, status)` index | ✅ | ✅ |
+| Initial migration committed; `npx prisma migrate dev` works with `docker-compose.yml` | ⚠️ Files committed but never run (it found Docker unavailable and gave up) | ✅ Applied to a Compose PostgreSQL; `migrate status`: "Database schema is up to date!" |
+| `src/server/db.ts` exports a hot-reload-safe PrismaClient singleton | ❌ Throws on import: "PrismaClient requires a driver adapter" (Prisma 7) | ✅ Uses `@prisma/adapter-pg`; constructs without a database |
+| `.env.example` documents `DATABASE_URL`; `.env` ignored | ✅ | ✅ |
+| `npm run lint`, `typecheck`, `test` pass | ✅ | ✅ |
+| **Criteria met** | **4 / 6** | **6 / 6** |
+
+The `db.ts` result comes from a one-off test that imports the module on each branch. Typecheck does not catch the no-rules crash, because the constructor's types accept an empty options object.
+
+## 3. Measured differences
+
+| Metric | No rules | Rules v3 |
+|---|---|---|
+| Acceptance criteria met | 4 / 6 | 6 / 6 |
+| New unit tests | 0 | 9 (in `prisma-schema.test.ts` and `prisma-client.test.ts`) |
+| Failing-test commit before implementation | No | Yes, `6bb4763`. Re-run: 8 assertion failures plus a missing `@/server/db` module |
+| Definition of done run by the agent | lint, typecheck, test | lint, typecheck, test, build, E2E, `prisma validate`, `migrate status` |
+| My re-run: lint / typecheck / test / build / E2E | pass ×5 | pass ×5 (after `prisma generate`) |
+| Branch created before editing | No (at commit time) | Yes |
+| Commit format (§7) | `chore(#1): …`, no `Refs #1` | `test(#1)` and `feat(#1)`, both with `Refs #1` |
+| Pushed without being asked to push | n/a | Refused, citing AGENTS.md |
+| Files changed | 11 (+1692 / −51) | 13 (+2092 / −44) |
+| Time from prompt to "done" | ≈ 4.3 min | ≈ 7.7 min |
+
+### Code snippets: the same file, with and without rules
+
+`src/server/db.ts` **without rules** (crashes in Prisma 7):
 ```ts
-// tests/unit/prisma-schema.test.ts (only on sarna-rules-experiment)
-it("defines the three task statuses and defaults new tasks to TODO", () => {
-  expect(schema).toMatch(/enum TaskStatus\s*\{\s*TODO\s+IN_PROGRESS\s+DONE\s*\}/);
-  expect(schema).toMatch(/status\s+TaskStatus\s+@default\(TODO\)/);
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+  });
+```
+
+`src/server/db.ts` **with rules** (AGENTS.md §2 "Prisma 7" told it about the adapter):
+```ts
+return new PrismaClient({
+  adapter: new PrismaPg({ connectionString: databaseUrl }),
 });
 ```
 
-Without rules, nothing checks the schema against the PRD. A later change to the `TaskStatus` enum would pass every check.
+The test the rules run wrote first, which turns that runtime crash into a failing test:
+```ts
+// tests/unit/prisma-client.test.ts (feature/1-prisma-postgres-tdd)
+expect(prisma).toBeTruthy();
+expect(typeof prisma.$connect).toBe("function");
+```
 
-## 4. Weaknesses in the with-rules output
+## 4. Threats to validity
 
-- **The tests are regex checks on source text.** They confirm the schema *says* the right thing, not that Prisma accepts it. A stronger test would run `prisma validate`, or check the generated client types.
-- **Gaps:** `User.name`, `Project.name`, `Task.title`, and the `createdAt` fields are not checked. The `cuid()` regex matches the first model's `id` line, so it does not prove every model uses `cuid()`.
-- **Definition of done not fully verified on this machine.** Locally, `npm test` fails *before running any test*: vitest 5 requires Node ^22.12, but the machine has Node 20.20.2 (`undici ... reading 'bind'`). This is an environment problem and affects both branches the same way. The rules require pasting real check output (R5), and this is exactly the gap that rule is meant to catch.
-- **AGENTS.md §7 lists Issue #1's PRD story as "TBD"** and tells the agent to ask before guessing criteria. The agent used PRD §6 instead. That was a sensible choice, but the rules file should name it.
+- **The rules run saw earlier work.** The worktrees share one repository's branches. Before writing its tests, the rules agent viewed the no-rules branch's schema, `db.ts`, and config, and the round-2 tests, calling them "prior art". Its decisive choices (the `prisma-client` generator, the driver adapter, testing `db.ts`) appear in AGENTS.md v3 and are absent from the no-rules code. Even so, the run is not fully independent. Next time, use a separate `git clone`.
+- **The environment differed.** Docker was not running for the no-rules run, which gave up on it. The rules agent started Docker Desktop itself. That is an agent-behavior difference, but it also gave the rules run an advantage when verifying migrations.
+- **Test expectations changed after the red commit.** In `901ebb4` the rules run weakened one assertion (`toBeInstanceOf(PrismaClient)` became truthy plus a `$connect` check), adapted two to its implementation, and added one stricter check. AGENTS.md forbids changing expectations to get a pass.
+- **One run per condition.** LLM output varies, so these are single samples, not averages.
 
-## 5. Changes to AGENTS.md based on this test
+## 5. Iteration on AGENTS.md (v1 → v3)
 
-All of the changes below, plus the Week 6–8 additions, were applied in AGENTS.md v2 (see its §12 changelog) and the new `DESIGN.md`. `.vscode/settings.json` now sets `"chat.useAgentsMdFile": true`.
+| Version | Trigger | Main changes |
+|---|---|---|
+| v1 (`8502947`) | Initial | Stack, architecture, TDD, git, security, a11y, R1–R7 |
+| v2 (`28cf9b8`) | Round 1, plus course weeks 6–8 | Visual spec moved to `DESIGN.md`; Node ≥ 22.12; plan-first R0; commit-body rule; criteria map; PR self-review; pair/sprint rules; under ~200 lines |
+| v3 (`749a5cb`) | Round 2: the v2 rules run met 3/6 | Issue body is the criteria source (v2 had pointed #1 at PRD §6, so the run missed docker-compose, `db.ts`, and the migration). R0 is a plan-only first reply; R3 is a hard test-first gate. Approved #1 packages. Prisma 7 rules: `prisma-client` generator (v2 used `prisma-client-js`, so lint failed), `dotenv/config`, driver adapter, migrations without a database. A test must construct the db client. |
 
-1. Map Issue #1 to PRD §6 (and fill in the other TBD rows) so the agent does not have to guess.
-2. Add a required Node version (`>=22.12`) to §2 and to `package.json` `engines`, so an old Node fails loudly.
-3. Say that schema tests should use `prisma validate` or generated types, not only regex checks on the source.
-4. List the approved dependencies for each issue (Prisma, `@prisma/client`, `dotenv` for #1) so "ask first" has a clear answer.
-5. Add a methodology note to the experiment instructions: one fresh chat per run.
+**What worked:** rules that named concrete facts the model could not infer, like the Prisma 7 adapter, the generator name, and where criteria live. They changed the output directly. Rules phrased as a hard gate with an observable action ("your first commit is `test(#N)`", "end with 'Waiting for approval.'") were followed in v3. The softer v2 wording ("follow §6") was skipped.
+
+**What didn't:** a wrong pointer in the rules file was worse than no rule. v2's backlog map sent the agent to the PRD instead of the issue, and the no-rules run (which read the issue) beat it. Ask-first rules about downloads were still bent: v3's run started Docker and pulled a Postgres image without asking.
+
+**Next changes:** list Docker and image pulls under ask-first. Forbid reading other branches during a run. Forbid editing a test's expectations after the red commit unless the plan is re-approved. Add `prisma generate` to the README setup and the definition of done.
 
 ## 6. Conclusion
 
-With the PRD in the repo, both runs produced the same correct schema. The rules made the difference in **process and verification**: 0 → 4 tests, a graded red → green commit pair, correctly formatted Conventional Commits, and test conventions that match §6. The shared chat session and the disabled `chat.useAgentsMdFile` setting are the biggest weaknesses of this comparison. The result suggests AGENTS.md changed how the agent worked, but it does not show what an independent agent with the rules actually loaded would build. Both experiments will be rerun with AGENTS.md v2 under clean conditions (§1 rerun plan).
+Under matched conditions, AGENTS.md v3 produced a measurable improvement. It met 6/6 acceptance criteria instead of 4/6, added 9 tests instead of 0, kept a verifiable red → green history, ran the full definition of done, and followed the branch, commit, and push rules. The no-rules code looked complete but shipped a database client that crashes on first import. The rules run wrote a test that catches that crash. The improvement came only after two rounds of fixing both the method (separate chats, separate worktrees, the VS Code setting) and the rules file itself. That is the main lesson about context engineering: the rules file is only as good as its last test against a real feature.
