@@ -1,45 +1,40 @@
 # AGENTS.md — Team Task Board
 
-<!--
-  Rules for AI coding assistants (and humans) working in this repository.
-  Owner: Tyler Sarna
-  Version: 1
-  IDE workflow: Visual Studio Code + GitHub Copilot Chat (see §11).
-  Every rule must match the real repository. Lines marked VERIFY must be checked and the marker removed before committing.
--->
+<!-- Rules for AI assistants and humans. Owner: Tyler Sarna · v2 (§12). Tool: VS Code + Copilot Chat (§11).
+     Loads on every request: keep under ~200 lines, link to docs/ instead of pasting. Change via its own PR; revisit at each retro. -->
 
 ## 0. Quick reference (read this first)
+Requires **Node.js ≥ 22.12** (vitest 5 and undici refuse older versions; Node 20 crashes `npm test` before any test runs).
 
 ```bash
 npm run dev          # local dev server
 npm run lint         # ESLint
 npm run typecheck    # next typegen + tsc (generates PageProps/LayoutProps)
 npm test             # Vitest, single run
-npx playwright test  # E2E (Chromium) — writes only to test-results/   <!-- VERIFY: script name / webServer in playwright.config.ts -->
+npm run test:e2e     # Playwright (Chromium); its webServer runs build + start. Output only in test-results/
 npm run build        # production build; catches the cacheComponents/Suspense rule (§2)
+npx prisma validate  # schema check; npx prisma generate after any schema change
 ```
 
 **Definition of done** (run all, report real output):
 ```bash
-npm run lint && npm run typecheck && npm test && npm run build && npx playwright test
+npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e
 ```
 
 **Boundaries**
-- ✅ **Always:** work on a feature branch; follow red → green (§6); run the definition of done before claiming done; reuse types from `src/lib/`.
-- ⚠️ **Ask first:** adding or upgrading any dependency; any command that downloads something (`npm install <pkg>`, `npx` of a tool that is not installed, `npx playwright install`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.*`, `playwright.config.ts`, `package.json` scripts, `.vscode/`); calling `gh` or other network tools; anything outside the issue's scope.
-- 🚫 **Never:** commit to or push to `main`; push, open, or merge PRs; amend, rebase, or squash the failing-test commit (it is graded evidence); skip, delete, or weaken a test to make it pass (`.skip`, `.only`, changed expectations); add `@ts-ignore`, `@ts-expect-error`, or `eslint-disable`; read, print, or commit `.env*` files (except `.env.example`); use `dangerouslySetInnerHTML`.
+- ✅ **Always:** one fresh chat per issue; work on a feature branch; plan before editing (R0); follow red → green (§6); run the definition of done before claiming done; reuse types from `src/lib/`.
+- ⚠️ **Ask first:** adding or upgrading any dependency not approved for the issue (§2); any command that downloads something (`npm install <pkg>`, `npx` of a tool that is not installed, `npx playwright install`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.*`, `playwright.config.ts`, `prisma.config.ts`, `package.json` scripts, `.vscode/`); calling `gh` or other network tools; anything outside the issue's scope.
+- 🚫 **Never:** commit to or push to `main`; push, open, or merge PRs; amend, rebase, or squash the failing-test commit (it is graded evidence); skip, delete, or weaken a test to make it pass (`.skip`, `.only`, changed expectations); add `@ts-ignore`, `@ts-expect-error`, or `eslint-disable`; read, print, or commit `.env*` files (except `.env.example`); edit `src/generated/`; use `dangerouslySetInnerHTML`.
 
 ## 1. Project overview
-
 Team Task Board is a minimal Kanban app. Users group work into projects and move tasks
 through **To Do → In Progress → Done**. CS6983 pair project. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: Nov 3 – Nov 10, 2026.
 
-- Requirements (user stories US1–US5 with acceptance criteria): `docs/prd.md`
-- Mockup (visual spec): `docs/mockups/board.png` (desktop), `docs/mockups/board-mobile.png` (375px). If you cannot view images, read the HTML source `docs/mockups/board.html`.
-- Backlog: GitHub Project "Team Task Board", one issue per unit of work. Issue numbers are in §7.
+- Requirements (US1–US5 with acceptance criteria, data model in §6): `docs/prd.md`
+- Visual spec: `DESIGN.md` (tokens, components, do's and don'ts). Mockups: `docs/mockups/board.png` (1280px), `board-mobile.png` (375px); if you cannot view images, read `docs/mockups/board.html`.
+- Backlog: GitHub Project "Team Task Board", one issue per unit of work. Issue numbers in §7.
 
 ## 2. Tech stack
-
 `package.json` and `package-lock.json` are the source of truth; this table is a snapshot. Do not upgrade anything without an issue.
 
 | Area | Package | Version |
@@ -49,13 +44,15 @@ through **To Do → In Progress → Done**. CS6983 pair project. Sprint 1: Oct 2
 | Language | typescript (strict) | 5.9.3 |
 | Styling | tailwindcss v4 (CSS-first config in `src/app/globals.css`) | 4.3.3 |
 | Lint | eslint / eslint-config-next | 9.39.5 / 16.4.3 |
+| Database | prisma, @prisma/client (PostgreSQL), dotenv | 7.10.1, 7.10.1, 18.0.9 |
 | Unit + component tests | vitest, jsdom, @testing-library/react, @testing-library/user-event, @testing-library/jest-dom | 5.0.5, 30.1.3, 16.3.3, 14.6.8, 7.0.1 |
 | E2E | @playwright/test (Chromium) | 1.64.1 |
 
-**Planned, not installed** (each added by its own issue): Prisma + PostgreSQL (Neon), zod, jose (JWT), bcryptjs. Do not import them yet.
+**Approved dependencies per issue** (anything else: stop and ask): #2 `@vitest/coverage-v8`; #4 `zod`, `jose`, `bcryptjs`. Do not import a package before its issue.
+
+**Prisma:** schema in `prisma/schema.prisma`, migrations in `prisma/migrations/` (create with `npx prisma migrate dev --name <slug>`; never hand-edit an applied migration). The client is generated into `src/generated/prisma/` (gitignored) by `npx prisma generate`. `DATABASE_URL` comes from `.env`; `.env.example` lists names only.
 
 ### Next.js 16 specifics (your training data is probably older)
-
 - Docs for this exact version are in `node_modules/next/dist/docs/`. Read them before using an API you are unsure about.
 - `cacheComponents: true` is on. A page that awaits `params`, cookies, or other runtime data **outside `<Suspense>` fails `npm run build`** ("Uncached data was accessed outside of `<Suspense>`"). Keep the page sync and put the async part inside Suspense:
   ```tsx
@@ -68,86 +65,66 @@ through **To Do → In Progress → Done**. CS6983 pair project. Sprint 1: Oct 2
     );
   }
   ```
-- `params` and `searchParams` are Promises. Use the global helpers `PageProps<"/route">` and `LayoutProps<"/route">` (generated by `next typegen`, which `npm run typecheck` runs). Do not hand-write prop types for them.
+- `params` and `searchParams` are Promises. Use the global helpers `PageProps<"/route">` and `LayoutProps<"/route">` (generated by `next typegen`). Do not hand-write prop types for them.
 - Do not use `generateStaticParams` to get around the Suspense rule. Project ids become dynamic in Sprint 2.
 - **Unknown ids:** call `notFound()` from `next/navigation`. Because the page streams, the HTTP status can still be **200**. Tests assert on the rendered not-found text, never on `response.status()`.
-- `agentRules: false` in `next.config.ts` stops `next dev` from writing its own block into this AGENTS.md. Do not change it; this AGENTS.md is maintained by hand. <!-- VERIFY: if next.config.ts sets experimental.agentFeedback, it also writes a managed block here; keep it off for the same reason. -->
+- `agentRules: false` in `next.config.ts` stops `next dev` from writing its own block into this file. Do not change it, and do not enable `experimental.agentFeedback` (same reason).
 
-### Tailwind v4 specifics
-
-- There is no `tailwind.config.*`. Do not create one. Theme changes go in `@theme` in `src/app/globals.css`, and only when an issue requires it.
-- Never remove focus outlines. In v4 `outline-none` sets `outline-style: none`; do not use it (or `outline-hidden`) on focusable elements.
+**Tailwind v4:** there is no `tailwind.config.*`; do not create one. Theme changes go in `@theme` in `src/app/globals.css`, only when an issue requires it (`DESIGN.md` tokens map to default classes). Never use `outline-none` or `outline-hidden` on focusable elements.
 
 ## 3. Architecture and directory structure
+Files marked *(planned #N)* do not exist yet; the issue creates them. Do not go looking for them earlier.
 
 ```
 src/
   app/                              Routes only (pages, layouts, route handlers). Thin; no business logic.
     page.tsx                        Home
-    projects/[projectId]/page.tsx   Project board page (sync server component, see §2)
-    api/v1/**/route.ts              (planned) REST API: auth → validate → service → JSON
-  components/
-    board/
-      ProjectBoard.tsx              Async server component: awaits params, loads data, renders Board   <!-- VERIFY location -->
-      BoardSkeleton.tsx             Suspense fallback                                                  <!-- VERIFY location -->
-      Board.tsx                     "use client"; owns board state
-      BoardColumn.tsx               One status column: header, count, cards, empty state
-      TaskCard.tsx                  One task: title, description, status select
-    ui/                             Shared primitives, added only when used twice
+    projects/[projectId]/page.tsx   (planned #6) Board page, sync server component (§2)
+    api/v1/**/route.ts              (planned #4/#5/#7) REST API: auth → validate → service → JSON
+  components/board/                 (planned #6) ProjectBoard (async, loads data), BoardSkeleton,
+                                    Board ("use client", owns state), BoardColumn, TaskCard
+  components/ui/                    Shared primitives, added only when used twice
   lib/                              Framework-free TypeScript
     tasks.ts                        Task and TaskStatus types (single source of truth)
-    task-status.ts                  TASK_STATUSES and STATUS_LABELS
-    board.ts                        Pure board logic (groupTasksByStatus, moveTask)
-    mock-tasks.ts                   Mock data until the API exists (Sprint 2)   <!-- VERIFY: also holds the mock project ("demo" / "Demo Project")? -->
-  server/                           (planned) db client, services, auth. Server-only.
-tests/unit/                         Tests that span modules
+    mock-tasks.ts                   mockProject ("demo" / "Demo Project") and mockTasks until #8
+    task-status.ts                  (planned #6) TASK_STATUSES and STATUS_LABELS
+    board.ts                        (planned #6) Pure board logic (groupTasksByStatus, moveTask)
+  generated/prisma/                 Generated Prisma client. Never edit; never commit.
+  server/                           (planned #4) db client, services, auth. Server-only.
+prisma/                             schema.prisma + migrations/
+tests/unit/                         Tests that span modules (e.g. prisma-schema.test.ts)
 e2e/                                Playwright specs
-docs/                               PRD, mockups, later OpenAPI and sprint notes
-vitest.setup.ts                     Registers Testing Library cleanup and jest-dom
+docs/                               PRD, mockups, hw3/, later api/openapi.yaml and sprints/
 ```
 
 Key patterns:
 - **Server components by default.** Only `Board.tsx` has `"use client"`. `BoardColumn` and `TaskCard` stay presentational and receive callbacks as props.
 - **Logic in pure functions in `src/lib/`**, unit tested without React. `Board` holds one `Task[]` in `useState` (or `useReducer`) and updates it by calling those functions; tasks are found by `id`.
 - **Statuses come from `src/lib/task-status.ts` only:** `TASK_STATUSES = ["TODO", "IN_PROGRESS", "DONE"]`, `STATUS_LABELS = { TODO: "To Do", IN_PROGRESS: "In Progress", DONE: "Done" }`. Never hard-code status values or labels in components; iterate `TASK_STATUSES`.
-- **Sprint 1 data:** `ProjectBoard` passes the mock tasks for `projectId` into `Board`. In Sprint 2 the same props come from the API. `Board` must not know where data comes from.
+- **Data source is hidden from the UI:** Sprint 1 passes mock tasks into `Board`; Sprint 2 passes the same props from the API.
 
 ## 4. Naming and coding standards
-
 - Components: `PascalCase.tsx`, one per file, **named exports** (`export function TaskCard`). Only Next.js route files (`page.tsx`, `layout.tsx`, `not-found.tsx`, …) use default exports.
 - Props: `type TaskCardProps = { … }` declared directly above the component.
-- Functions and variables `camelCase`; constants `UPPER_SNAKE_CASE`; types `PascalCase` with no `I` prefix.
+- Functions and variables `camelCase`; constants `UPPER_SNAKE_CASE`; types `PascalCase` with no `I` prefix. Prisma models `PascalCase`, fields `camelCase`.
 - Route folders `kebab-case`; dynamic segments are descriptive (`[projectId]`, not `[id]`).
-- TypeScript strict: no `any`, no non-null `!`, no `as` casts to silence errors, no `@ts-ignore` / `@ts-expect-error`.
+- TypeScript strict: no `any`, no non-null `!`, no `as` casts to silence errors.
 - Styling: Tailwind utility classes only. No CSS modules, inline `style`, or new global CSS. Conditional classes use template strings.
-- Imports: `@/` alias for `src/`; no `../../`.
+- Imports: `@/` alias for `src/`; no `../../`. No `console.log` or commented-out code in commits.
 - Split a component that grows past about 120 lines.
 
-## 5. UI components and expected behavior (US4, `docs/mockups/board.png`)
-
-| Component | Must do |
-|---|---|
-| Page `/projects/[projectId]` | `<h1>` with the project name (mock: "Demo Project"), breadcrumb "Projects / Demo Project", then the board. Unknown id → `notFound()` |
-| `Board` | Three columns in `TASK_STATUSES` order. A status change updates state immediately (no reload) |
-| `BoardColumn` | `<section aria-labelledby>` with an `<h2>` title and a count pill. Cards in `<ul>`/`<li>`. Empty column: dashed box with **"No tasks yet"** |
-| `TaskCard` | `<h3>` title, optional description in muted text, native `<select>` with To Do / In Progress / Done. Accessible name **"Status for {task title}"** via `aria-label`; the visible "Status" text is `aria-hidden` |
-
-Visual tokens:
-- Page `bg-zinc-100`; card `bg-white border border-zinc-200 rounded-lg`.
-- Column top border `border-t-4` plus: To Do `border-t-slate-500`, In Progress `border-t-blue-600`, Done `border-t-green-600`.
-- Count pill `rounded-full bg-zinc-200 text-xs font-semibold`.
-- Layout `grid grid-cols-1 gap-4 md:grid-cols-3`; columns stack below 768px; no horizontal page scroll at 375px.
+## 5. Design and user flows
+UI work follows **`DESIGN.md`** (component specs and Tailwind classes) and the mockups. In short: page `/projects/[projectId]` has a breadcrumb "Projects / {name}" and an `<h1>`; three `BoardColumn` sections in `TASK_STATUSES` order, each with an `<h2>`, a count pill, and "No tasks yet" when empty; each `TaskCard` has an `<h3>`, optional muted description, and a native `<select>` named **"Status for {task title}"**.
 
 User flows:
-1. **View board (Sprint 1):** Home → "Open the demo board" → `/projects/demo` → three columns with counts.
-2. **Change status (Sprint 1):** choose a value in a card's select → card moves to that column → both counts update → an emptied column shows "No tasks yet".
-3. **(Sprint 2, #8)** The change calls `PATCH /api/v1/tasks/:id`: optimistic update, roll back on failure, show an error message.
-4. **(#4, #5)** Register or log in → projects list → open a project → board.
+1. **View board (Sprint 1, #6):** Home → "Open the demo board" → `/projects/demo` → three columns with counts.
+2. **Change status (Sprint 1, #6):** choose a value in a card's select → card moves to that column → both counts update → an emptied column shows "No tasks yet".
+3. **Persist status (Sprint 2, #8):** `PATCH /api/v1/tasks/:id`; optimistic update, roll back on failure, show an error message.
+4. **Sign in to board (#4, #5):** register or log in → projects list → open a project → board.
 
 ## 6. Testing and TDD
-
 **Red → green → refactor for every feature issue:**
-1. Write tests from the acceptance criteria, run them, and show them failing **for the right reason** (an assertion or a missing export, not a typo or broken setup). Commit `test(#N): …`.
+1. Write tests from the acceptance criteria, run them, and show them failing **for the right reason** (an assertion or a missing export, not a typo, broken setup, or wrong Node version). Commit `test(#N): …`.
 2. Write the minimum code to pass. Commit `feat(#N): …` (or `fix(#N): …`).
 3. Optional cleanup with tests green: `refactor(#N): …`.
 
@@ -160,74 +137,76 @@ Rules:
   const user = userEvent.setup();
   render(<Board tasks={tasks} />); // use Board's real props
   await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write PRD" }), "Done");
-  const done = screen.getByRole("region", { name: /^Done/ }) // name may include the count;
+  const done = screen.getByRole("region", { name: /^Done/ }); // name may include the count
   expect(within(done).getByRole("heading", { name: "Write PRD" })).toBeInTheDocument();
   ```
 - Pure functions in `src/lib/` get unit tests including edge cases (empty list, unknown id, same-status move).
-- **E2E:** every UI feature issue adds or extends `e2e/<feature>.spec.ts` for its main flow; layout work includes the 375px no-horizontal-scroll check. Commit the spec with the feature; never write a throwaway spec. E2E covers journeys, not every branch.
-- Screenshots, traces, and other scratch output go only to the gitignored `test-results/`.
-- Coverage target 80%+ lines in `src/lib` and `src/components`. `@vitest/coverage-v8` arrives with #2; do not install it earlier.
+- **Database:** schema tests check *every* field and constraint in PRD §6, not just a sample, and the schema must also pass `npx prisma validate`. API issues test error paths: empty input, invalid input, unknown or other user's id.
+- **E2E:** every UI feature issue adds or extends `e2e/<feature>.spec.ts` for its main flow; layout work includes the 375px no-horizontal-scroll check. Commit the spec with the feature. E2E covers journeys, not every branch.
+- Coverage target 80%+ lines in `src/lib` and `src/components` (measured once #2 adds `@vitest/coverage-v8`).
 
 ## 7. Git, issues, and pull requests
-
 - Branches: `feature/<issue>-<slug>`, `fix/…`, `chore/…`, `docs/…` (e.g. `feature/6-kanban-board`). Never work on `main`.
-- Commits: Conventional Commits with the issue number, `type(#N): imperative summary`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Body: `Refs #N`.
+- Commits: Conventional Commits, `type(#N): imperative summary`. Types: `feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`. Body ends with `Refs #N`. Write multi-line messages as `git commit -m "<subject>" -m "<body>"`; never put a literal `\n` in a message.
 - Code comments mention an issue only for a deliberate temporary choice: `// TODO(#8): replace mock data with API`.
-- PRs (opened by a human): title `[#N] Summary`; body has `Closes #N`, the acceptance-criteria checklist, the SHA of the failing-test commit, test evidence, screenshots for UI changes, and an "AI usage" note (tool and what it generated). One partner review required. Merge with a **merge commit**, never squash, so the red/green history survives. One issue per PR, ideally under ~300 changed lines.
+- **Before a PR, self-review:** ask the AI to "review this diff for bugs, security issues, and style violations against @AGENTS.md and @DESIGN.md", fix what is real, and rerun the definition of done.
+- **PRs (opened by a human):** title `[#N] Summary`; body has `Closes #N`, the acceptance-criteria checklist, the failing-test commit SHA, test evidence, screenshots for UI changes, and an "AI usage" note. One partner review required, checking: matches the issue's criteria, tests included, AGENTS.md followed, no dead code. Merge with a **merge commit**, never squash. One issue per PR, ideally under ~300 changed lines.
+- **Pair rules:** each issue has one owner; never edit files owned by your partner's open branch. Agree on shared interfaces (props, API shapes, schema) before splitting work. Product Owner and Scrum Master rotate each sprint.
+- **Sprint notes:** `docs/sprints/sprint-N/` holds `planning.md` (goal, issues, estimates, PO/SM), standups (3+ per partner per sprint), and `retro.md`. The AI may draft standups from `git log`; a human posts them.
 
 ### Backlog map (use only these numbers; never guess)
-
-| # | Issue | Sprint | PRD story |
+| # | Issue | Sprint | Acceptance criteria from |
 |---|---|---|---|
-| 1 | Set up Prisma with PostgreSQL schema | 1 | TBD |
-| 2 | CI pipeline (lint, typecheck, unit, E2E) | 1 | TBD |
-| 3 | Vercel deployment with previews and Neon | 1 | TBD |
-| 4 | Registration and login with JWT | 1 | TBD |
-| 5 | Projects API and projects list page | 1 | TBD |
-| 6 | Three-column Kanban board with mock data | 1 | US4 |
-| 7 | Tasks CRUD API | 2 | TBD |
-| 8 | Connect board to tasks API (optimistic updates) | 2 | TBD |
-| 9 | Task create/edit/delete UI | 2 | TBD |
-| 10 | Security scanning (CodeQL, npm audit, Dependabot) | 2 | TBD |
-| 11 | OpenAPI docs at /api/docs | 2 | TBD |
-| 12 | E2E test for the core journey | 2 | TBD |
-| 13 | README, diagrams, setup guide | 2 | TBD |
+| 1 | Set up Prisma with PostgreSQL schema | 1 | PRD §6 data model |
+| 2 | CI pipeline (lint, typecheck, unit, E2E) | 1 | Issue body (infrastructure) |
+| 3 | Vercel deployment with previews and Neon | 1 | Issue body; PRD §7 |
+| 4 | Registration and login with JWT | 1 | US1 |
+| 5 | Projects API and projects list page | 1 | US2 |
+| 6 | Three-column Kanban board with mock data | 1 | US4 (all but the Sprint 2 item) |
+| 7 | Tasks CRUD API | 2 | US3; US5 error shape |
+| 8 | Connect board to tasks API (optimistic updates) | 2 | US4 Sprint 2 item |
+| 9 | Task create/edit/delete UI | 2 | US3 |
+| 10 | Security scanning (CodeQL, npm audit, Dependabot) | 2 | Issue body (infrastructure) |
+| 11 | OpenAPI docs at /api/docs | 2 | US5 |
+| 12 | E2E test for the core journey | 2 | §5 flows 1–4 |
+| 13 | README, diagrams, setup guide | 2 | Issue body (docs) |
 
-<!-- VERIFY: fill in the PRD story column (or "none" for infrastructure issues). -->
-If the PRD story for your issue is `TBD`, ask which story and acceptance criteria apply. Do not invent criteria.
+For "Issue body" rows, ask the human to paste the issue's acceptance criteria. Do not invent criteria.
 
 ## 8. Libraries: prefer and avoid
+Prefer React state and hooks, Next.js built-ins (`next/link`, route handlers), Tailwind, native HTML elements, `fetch`, Prisma for all database access, and the test libraries in §2.
 
-Prefer React state and hooks, Next.js built-ins (`next/link`, route handlers), Tailwind, native HTML elements, `fetch`, and the test libraries in §2.
-
-Avoid unless an issue approves it (and the PR explains why): UI kits (MUI, Chakra, Ant) or headless libraries for things native HTML does; global state (Redux, Zustand, MobX); drag-and-drop libraries (out of scope); CSS-in-JS, `classnames`, lodash, moment, axios.
+Avoid unless an issue approves it (and the PR explains why): UI kits (MUI, Chakra, Ant) or headless libraries for things native HTML does; global state (Redux, Zustand, MobX); drag-and-drop libraries (out of scope); CSS-in-JS, `classnames`, lodash, moment, axios; raw SQL outside migrations.
 
 ## 9. Security
-
 - Treat user text as text; React escaping only, never `dangerouslySetInnerHTML`.
-- (Planned API) Validate every request body with zod at the route boundary. Errors are `{ error: { code, message } }` with correct status codes.
-- (Planned auth) bcrypt for passwords; JWT in `httpOnly`, `Secure`, `SameSite=Lax` cookies. Scope every query by the owner's user id and return **404, not 403**, for other users' resources.
-- Secrets only from environment variables. Never log tokens or passwords.
+- (#4+) Validate every request body with zod at the route boundary. Errors are `{ error: { code, message } }` with correct status codes.
+- (#4) bcrypt for passwords; JWT in `httpOnly`, `Secure`, `SameSite=Lax` cookies. Scope every query by the owner's user id and return **404, not 403**, for other users' resources.
+- Secrets only from environment variables. Never log tokens or passwords. If a `.env` is ever committed, deleting it is not enough: rotate every key in it.
+- (#2, #3) CI never uses production secrets; tests and previews use a test database.
 - No analytics, external scripts, or network calls the issue does not require.
 
 ## 10. Accessibility (WCAG 2.1 AA)
-
 - One `<h1>` per page, `<h2>` per column, `<h3>` per card.
 - Every form control has an accessible name; prefer native `<select>`, `<button>`, `<input>`.
-- Everything works by keyboard, with a visible focus style (`focus-visible:outline`; see the Tailwind v4 note in §2).
+- Everything works by keyboard, with a visible focus style (`focus-visible:outline`; see §2).
 - Color is never the only signal: columns also have text titles and counts.
 - Text contrast ≥ 4.5:1; muted text is `text-zinc-600` or darker on white.
 
 ## 11. Rules for AI-assisted implementation
+**Setup (humans):** `.vscode/settings.json` must set `"chat.useAgentsMdFile": true`; with `false` (the no-rules experiment setting) Copilot never loads this file. Check that `AGENTS.md` appears in the first response's *References*; if not, attach it with *Add Context*. Start each issue in a new chat and never reuse a chat across issues or experiments. Claude Code users: if you add a `CLAUDE.md`, its only line is `@AGENTS.md`, or Claude Code stops reading this file. Do not copy these rules into tool folders.
 
-**Setup (humans):** `.vscode/settings.json` enables `chat.useAgentsMdFile`, so Copilot Chat adds this file to every request. If `AGENTS.md` is missing from the first response's *References*, attach it with *Add Context*. Start each issue in a new chat.
+**Assistant:** start your first reply by listing the sections and rules that apply (for example "§2, §5, §6, R0–R7"). Then:
 
-**Assistant:** start your first reply by listing the sections and rules that apply (for example "§2, §5, §6, R1–R7"). Then:
-
+- **R0 Plan first.** Before changing files, list the files you will create or edit and any package or command that downloads something, then wait for approval.
 - **R1 Scope.** Implement only the given issue. No unrelated refactors, renames, or config changes (see §0 boundaries).
-- **R2 Read first.** The PRD story for the issue (§7 map), the mockup, `src/lib/tasks.ts`, `src/lib/task-status.ts`, and `src/lib/mock-tasks.ts`. Reuse existing types; never redefine `Task` or `TaskStatus`.
+- **R2 Read first.** The criteria source for the issue (§7 map), `DESIGN.md` for UI work, `src/lib/tasks.ts`, `src/lib/mock-tasks.ts`, and `src/lib/task-status.ts` once it exists. Reuse existing types; never redefine `Task` or `TaskStatus`.
 - **R3 TDD.** Follow §6. Show the failing test output before writing the implementation, and commit it separately.
-- **R4 No new dependencies.** If you think one is needed, stop and explain why.
-- **R5 Verify.** Run the full definition of done (§0) and paste the real result of each command. Never say a check passed unless you ran it in this session. If a check fails and the fix is outside the issue's scope, stop and report.
-- **R6 Ambiguity.** Pick the option closest to the mockup and PRD and state the assumption. If the PRD and mockup contradict each other, or the choice affects data shape or the API, ask instead.
+- **R4 Dependencies.** Only those approved for the issue in §2. If you think another is needed, stop and explain why.
+- **R5 Verify.** Run the full definition of done (§0) and paste the real result of each command. Never say a check passed unless you ran it in this session. If a check cannot run because of the environment (Node version, missing browser, no database), say so and stop; never report it as passing. If a fix is outside the issue's scope, stop and report.
+- **R6 Ambiguity.** Pick the option closest to `DESIGN.md`, the mockup, and the PRD and state the assumption. If they contradict each other, or the choice affects data shape or the API, ask instead.
 - **R7 Summary.** End with: files changed; acceptance-criteria checklist (each item checked or not, with the test that covers it); commands run with results; commit SHAs (test and feat); assumptions; and the last line `Rules: AGENTS.md`.
+
+## 12. Changelog
+- **v2 (2026-10-28)** — from the #1 with/without-rules experiment and Weeks 6–8: moved the visual spec to `DESIGN.md`; added the Node ≥ 22.12 requirement, Prisma commands, and approved dependencies per issue; marked planned files; filled the backlog criteria map; added R0 plan-first, the commit-body rule, schema test depth, the environment-failure rule, PR self-review, pair and sprint-notes rules, and the `.vscode` / CLAUDE.md setup checks; resolved all open verification markers.
+- **v1 (2026-10-27)** — first version, used for the #1 experiment.
