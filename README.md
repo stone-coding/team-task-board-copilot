@@ -10,6 +10,16 @@ npx playwright install chromium   # first time only
 npm run dev                        # http://localhost:3000
 ```
 
+## Database setup
+
+Prisma uses PostgreSQL. Copy `.env.example` to `.env` and set `DATABASE_URL` to your PostgreSQL connection string, then generate the client and apply the checked-in migration:
+
+```bash
+cp .env.example .env
+npx prisma generate
+npx prisma migrate dev
+```
+
 ## Checks
 
 ```bash
