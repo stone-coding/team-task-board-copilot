@@ -5,11 +5,24 @@
 
 | | Without rules | With rules (AGENTS.md v3) |
 |---|---|---|
-| Branch | `feature/1-prisma-postgres` | `feature/1-prisma-postgres-tdd` |
+| Branch | `hw3/run5-no-rules-valid` | `hw3/run6-rules-v3-valid` |
 | Commits | `adc7056` | `6bb4763` (red test), `901ebb4` (green) |
 | Rules file | none | `AGENTS.md` v3, commit `749a5cb` on `sarna-rules-experiment` |
 
 ## 1. Methodology
+
+Every run has its own branch, named `hw3/run<N>-<rules-vX|no-rules>-<valid|contaminated>` in the order the runs happened. "Contaminated" means the run saw rules or earlier answers it should not have.
+
+| Run | Branch | Condition | Outcome |
+|---|---|---|---|
+| 1 | `hw3/run1-no-rules-valid` | No rules (Oct 27) | Shared a chat with run 2 afterwards |
+| 2 | `hw3/run2-rules-v1-contaminated` | AGENTS.md v1, same chat as run 1, setting off | Same code as run 1 |
+| 3 | `hw3/run3-no-rules-contaminated` | Meant as no rules, but v2 was loaded and it read old commits | Discarded |
+| 4 | `hw3/run4-rules-v2-valid` | AGENTS.md v2, clean worktree | 3/6 criteria; led to v3 |
+| 5 | `hw3/run5-no-rules-valid` | No rules, clean worktree | 4/6 criteria |
+| 6 | `hw3/run6-rules-v3-valid` | AGENTS.md v3, clean worktree | 6/6 criteria |
+
+Runs 5 and 6 are the matched pair compared below.
 
 It took three rounds to get a clean comparison. Rounds 1 and 2 were flawed, and fixing those flaws is part of the iteration story (§5).
 
@@ -31,8 +44,8 @@ Afterwards I re-ran every check on both branches with Node 22.23.4. I also check
 
 | Round | Branches | Why it was discarded |
 |---|---|---|
-| 1 (Oct 27) | `sarna-no-rules` vs `sarna-rules-experiment` | Both runs were in one chat, and `chat.useAgentsMdFile` was still `false` for the rules run. The Prisma code came out byte-identical. |
-| 2 (Oct 28) | `feature/1-prisma-schema-reimplementation` vs `feature/1-prisma` | The "no-rules" chat began with AGENTS.md v2 loaded and read the round-1 commits. The v2 rules run was clean, but met only 3/6 criteria. Its failures shaped v3. |
+| 1 (Oct 27) | `hw3/run1-no-rules-valid` vs `hw3/run2-rules-v1-contaminated` | Both runs were in one chat, and `chat.useAgentsMdFile` was still `false` for the rules run. The Prisma code came out byte-identical. |
+| 2 (Oct 28) | `hw3/run3-no-rules-contaminated` vs `hw3/run4-rules-v2-valid` | The "no-rules" chat began with AGENTS.md v2 loaded and read the round-1 commits. The v2 rules run was clean, but met only 3/6 criteria. Its failures shaped v3. |
 
 ## 2. Results against Issue #1's acceptance criteria
 
@@ -83,7 +96,7 @@ return new PrismaClient({
 
 The test the rules run wrote first, which turns that runtime crash into a failing test:
 ```ts
-// tests/unit/prisma-client.test.ts (feature/1-prisma-postgres-tdd)
+// tests/unit/prisma-client.test.ts (hw3/run6-rules-v3-valid)
 expect(prisma).toBeTruthy();
 expect(typeof prisma.$connect).toBe("function");
 ```
