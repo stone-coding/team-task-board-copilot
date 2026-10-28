@@ -46,3 +46,9 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /coverage/
+
+# course materials (local only)
+/HW3-Assignment-Rules.pdf
+/Week6.pdf
+/Week7.pdf
+/Week8.pdf
