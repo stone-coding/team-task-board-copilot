@@ -6,9 +6,14 @@ A minimal Kanban task board (CS6983 Project 2). Product requirements: [docs/prd.
 
 ```bash
 npm install
+cp .env.example .env
+docker compose up -d db
+npx prisma migrate dev
 npx playwright install chromium   # first time only
 npm run dev                        # http://localhost:3000
 ```
+
+The database configuration uses PostgreSQL via the local Docker service in `docker-compose.yml`. The Prisma schema expects a `DATABASE_URL` value in `.env` (documented in `.env.example`).
 
 ## Checks
 
