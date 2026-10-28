@@ -53,7 +53,7 @@ describe("Prisma PostgreSQL setup", () => {
       /import\s+["']dotenv\/config["']/,
     );
     expect(readFileOrEmpty("prisma.config.ts")).toMatch(
-      /datasource:\s*\{\s*url:\s*process\.env\.DATABASE_URL/s,
+      /datasource:\s*\{[\s\S]*?url:\s*env\(["']DATABASE_URL["']\)/,
     );
   });
 
@@ -149,10 +149,13 @@ describe("Prisma PostgreSQL setup", () => {
   });
 
   it("documents DATABASE_URL and ignores local environment files", () => {
+    const gitignore = readFileOrEmpty(".gitignore");
+
     expect(readFileOrEmpty(".env.example")).toMatch(
       /^DATABASE_URL=postgresql:\/\/.+$/m,
     );
-    expect(readFileOrEmpty(".gitignore")).toMatch(/^\.env\*/m);
+    expect(gitignore).toMatch(/^\.env\*/m);
+    expect(gitignore).toMatch(/^!\.env\.example$/m);
   });
 
   it("provides a local PostgreSQL service for the documented URL", () => {
@@ -163,6 +166,6 @@ describe("Prisma PostgreSQL setup", () => {
     expect(compose).toMatch(/POSTGRES_DB:/);
     expect(compose).toMatch(/POSTGRES_USER:/);
     expect(compose).toMatch(/POSTGRES_PASSWORD:/);
-    expect(compose).toMatch(/"5432:5432"/);
+    expect(compose).toMatch(/"\$\{POSTGRES_PORT:-5432\}:5432"/);
   });
 });

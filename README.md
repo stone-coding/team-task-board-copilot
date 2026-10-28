@@ -7,8 +7,13 @@ A minimal Kanban task board (CS6983 Project 2). Product requirements: [docs/prd.
 ```bash
 npm install
 npx playwright install chromium   # first time only
+docker compose up -d postgres
+cp .env.example .env
+npx prisma migrate dev
 npm run dev                        # http://localhost:3000
 ```
+
+If port `5432` is already in use, set `POSTGRES_PORT` to another host port when starting Compose and update `DATABASE_URL` in `.env` to match.
 
 ## Checks
 
