@@ -16,7 +16,7 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 | Area | State |
 |---|---|
 | Kanban board with mock data (#6) | Implemented on feature branch; PR pending: [`feature/6-kanban-board`](https://github.com/stone-coding/team-task-board-copilot/tree/feature/6-kanban-board) |
-| Database: Prisma 7 + PostgreSQL (#1) | Planned |
+| Database: Prisma 7 + PostgreSQL (#1) | Implemented on branch; PR pending: `chore/1-prisma-setup` |
 | CI pipeline (#2), Vercel deployment (#3) | Planned |
 | Auth (#4), projects API and list page (#5) | Planned |
 
@@ -29,8 +29,7 @@ There is no live deployment yet; Vercel preview and production URLs arrive with 
 | Node.js | **22.12 or later** (Vitest 5 and Prisma 7 refuse older versions) | `node -v` |
 | npm | 10 or later (ships with Node) | `npm -v` |
 | Git | any recent version | `git --version` |
-
-No database, accounts, or environment variables are needed yet. Docker (for local PostgreSQL) and `.env` setup will be added here by #1.
+| Docker | Docker Desktop or Engine with Compose v2 (local PostgreSQL) | `docker compose version` |
 
 ## Local setup
 
@@ -47,19 +46,29 @@ cd team-task-board-copilot
 npm ci
 ```
 
-**3. Install the Playwright browser** (once, only needed for end-to-end tests).
+**3. Start PostgreSQL and apply migrations.** `docker-compose.yml` runs Postgres 17 on port 5432 with a `team_task_board` database and a separate `team_task_board_test` database for integration tests.
+
+```bash
+cp .env.example .env
+docker compose up -d --wait
+npx prisma migrate dev
+```
+
+`migrate dev` applies `prisma/migrations/` and generates the client into `src/generated/prisma/` (gitignored). After any schema change, run `npx prisma generate`. Stop the database with `docker compose down` (add `-v` to delete its data).
+
+**4. Install the Playwright browser** (once, only needed for end-to-end tests).
 
 ```bash
 npx playwright install chromium
 ```
 
-**4. Start the development server.**
+**5. Start the development server.**
 
 ```bash
 npm run dev
 ```
 
-**5. Open the app** at http://localhost:3000. The demo board at **http://localhost:3000/projects/demo** works on the `feature/6-kanban-board` branch, **not yet on `main`** (it reaches `main` when #6 is merged). To try it now, run `git switch feature/6-kanban-board` before `npm run dev`:
+**6. Open the app** at http://localhost:3000. The demo board at **http://localhost:3000/projects/demo** works on the `feature/6-kanban-board` branch, **not yet on `main`** (it reaches `main` when #6 is merged). To try it now, run `git switch feature/6-kanban-board` before `npm run dev`:
 - Change a card's **Status** dropdown: the card moves to that column and the counts update.
 - An empty column shows **"No tasks yet"** (Done starts empty).
 - Below 768px the columns stack vertically.
@@ -97,7 +106,7 @@ docs/                       PRD and mockups; later API docs, architecture, sprin
 AGENTS.md, DESIGN.md        Shared rules and visual spec
 ```
 
-`AGENTS.md` §3 lists the planned additions (`src/server/`, `prisma/`, `tests/integration/`, `.github/`).
+`prisma/` holds the schema and migrations, and `src/server/db.ts` exports the shared Prisma client. `AGENTS.md` §3 lists the other planned additions (`tests/integration/`, `.github/`).
 
 ## Contributing
 
@@ -117,6 +126,8 @@ The full rules are in [AGENTS.md](AGENTS.md).
 | `npm run test:e2e` tests an old app | Playwright reuses a server already on port 3000 locally; stop that server first |
 | `npm run test:e2e` cannot find a browser | Run `npx playwright install chromium` |
 | `npm test` crashes before running tests | Upgrade to Node 22.12 or later |
+| `Cannot find module '@/generated/prisma/client'` | Run `npx prisma generate` |
+| `docker compose up` fails: port 5432 is already allocated | Another Postgres is running; stop it, or map another host port and update `DATABASE_URL` in `.env` |
 | `/projects/demo` returns "not found" | The board is on `feature/6-kanban-board`, not yet on `main`: run `git switch feature/6-kanban-board` |
 
 ## HW3
