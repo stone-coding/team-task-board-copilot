@@ -1,6 +1,5 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PrismaClient } from "@/generated/prisma/client";
 
 const TEST_URL = "postgresql://user:password@localhost:5432/unit_test";
 
@@ -11,16 +10,32 @@ describe("Prisma client singleton", () => {
   });
 
   afterEach(() => {
+    vi.doUnmock("@prisma/adapter-pg");
     vi.unstubAllEnvs();
     globalThis.prisma = undefined;
   });
 
-  it("constructs a PrismaClient from DATABASE_URL", async () => {
+  it("constructs a PrismaClient with the pg adapter from DATABASE_URL", async () => {
     vi.stubEnv("DATABASE_URL", TEST_URL);
+    const adapterConfigs: unknown[] = [];
+    vi.doMock("@prisma/adapter-pg", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("@prisma/adapter-pg")>();
+      class RecordingPrismaPg extends actual.PrismaPg {
+        constructor(...args: ConstructorParameters<typeof actual.PrismaPg>) {
+          super(...args);
+          adapterConfigs.push(args[0]);
+        }
+      }
+      return { PrismaPg: RecordingPrismaPg };
+    });
 
     const { prisma } = await import("@/server/db");
 
-    expect(prisma).toBeInstanceOf(PrismaClient);
+    expect(adapterConfigs).toEqual([{ connectionString: TEST_URL }]);
+    expect(typeof prisma.$connect).toBe("function");
+    expect(typeof prisma.user.findMany).toBe("function");
+    expect(typeof prisma.project.findMany).toBe("function");
+    expect(typeof prisma.task.findMany).toBe("function");
   });
 
   it("reuses the cached client across module reloads outside production", async () => {
