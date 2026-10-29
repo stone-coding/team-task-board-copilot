@@ -1,7 +1,7 @@
 {
-  // Experiment A (no rules): turn off every automatic source of AI instructions,
-  // so GitHub Copilot Chat sees only the prompt and the repository files.
-  "chat.useAgentsMdFile": false,
+  // Shared P2 setup: GitHub Copilot Chat loads the root AGENTS.md automatically.
+  // Nested AGENTS.md files and other instruction sources stay off (AGENTS.md §11).
+  "chat.useAgentsMdFile": true,
   "chat.useNestedAgentsMdFiles": false,
   "github.copilot.chat.codeGeneration.useInstructionFiles": false,
   "github.copilot.chat.codeGeneration.instructions": [],
