@@ -85,10 +85,10 @@ describe("local database environment", () => {
   });
 
   it("validates the Prisma schema without a DATABASE_URL so a fresh clone can generate the client", () => {
+    // child_process drops undefined entries, so DATABASE_URL is unset in the child.
     const env = {
-      ...Object.fromEntries(
-        Object.entries(process.env).filter(([name]) => name !== "DATABASE_URL"),
-      ),
+      ...process.env,
+      DATABASE_URL: undefined,
       DOTENV_CONFIG_PATH: join(root, "does-not-exist.env"),
     };
 
