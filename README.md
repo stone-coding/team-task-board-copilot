@@ -52,9 +52,10 @@ npm ci
 cp .env.example .env
 docker compose up -d --wait
 npx prisma migrate dev
+npx prisma generate
 ```
 
-`migrate dev` applies `prisma/migrations/` and generates the client into `src/generated/prisma/` (gitignored). After any schema change, run `npx prisma generate`. Stop the database with `docker compose down` (add `-v` to delete its data).
+`migrate dev` applies `prisma/migrations/`. Then run `npx prisma generate` to generate the client into `src/generated/prisma/` (gitignored); Prisma 7 does not do this during `migrate dev`. After any schema change, run `npx prisma generate` again. Stop the database with `docker compose down` (add `-v` to delete its data).
 
 **4. Install the Playwright browser** (once, only needed for end-to-end tests).
 
