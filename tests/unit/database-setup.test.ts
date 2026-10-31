@@ -85,8 +85,12 @@ describe("local database environment", () => {
   });
 
   it("validates the Prisma schema without a DATABASE_URL so a fresh clone can generate the client", () => {
-    const env = { ...process.env, DOTENV_CONFIG_PATH: join(root, "does-not-exist.env") };
-    delete env.DATABASE_URL;
+    const env = {
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([name]) => name !== "DATABASE_URL"),
+      ),
+      DOTENV_CONFIG_PATH: join(root, "does-not-exist.env"),
+    };
 
     const validate = () =>
       execFileSync(join(root, "node_modules/.bin/prisma"), ["validate"], {
