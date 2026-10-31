@@ -84,6 +84,20 @@ describe("local database environment", () => {
     expect(testDatabaseUrl).not.toBe(databaseUrl);
   });
 
+  it("validates the Prisma schema without a DATABASE_URL so a fresh clone can generate the client", () => {
+    const env = { ...process.env, DOTENV_CONFIG_PATH: join(root, "does-not-exist.env") };
+    delete env.DATABASE_URL;
+
+    const validate = () =>
+      execFileSync(join(root, "node_modules/.bin/prisma"), ["validate"], {
+        cwd: root,
+        env,
+        stdio: "pipe",
+      });
+
+    expect(validate).not.toThrow();
+  }, 30_000);
+
   it("commits .env.example while keeping .env gitignored", () => {
     expect(existsSync(join(root, ".env.example"))).toBe(true);
     expect(isGitIgnored(".env.example")).toBe(false);
