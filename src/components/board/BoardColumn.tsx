@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { TaskCard } from "@/components/board/TaskCard";
 import { STATUS_LABELS } from "@/lib/task-status";
 import type { Task, TaskStatus } from "@/lib/tasks";
@@ -15,7 +16,7 @@ const ACCENT_CLASSES: Record<TaskStatus, string> = {
 };
 
 export function BoardColumn({ status, tasks, onStatusChange }: BoardColumnProps) {
-  const headingId = `column-${status.toLowerCase()}`;
+  const headingId = useId();
 
   return (
     <section
@@ -28,6 +29,7 @@ export function BoardColumn({ status, tasks, onStatusChange }: BoardColumnProps)
         </h2>
         <span className="rounded-full bg-zinc-200 px-2 text-xs font-semibold text-zinc-600">
           {tasks.length}
+          <span className="sr-only">{tasks.length === 1 ? " task" : " tasks"}</span>
         </span>
       </div>
       {tasks.length > 0 ? (
