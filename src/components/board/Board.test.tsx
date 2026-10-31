@@ -8,6 +8,11 @@ function column(name: string) {
   return screen.getByRole("region", { name });
 }
 
+// The count pill shows only the number; screen readers also hear "tasks".
+function count(columnName: string, value: number) {
+  return within(column(columnName)).getByText(String(value));
+}
+
 describe("Board", () => {
   it("shows the columns To Do, In Progress, Done in that order", () => {
     render(<Board initialTasks={mockTasks} />);
@@ -24,9 +29,9 @@ describe("Board", () => {
     render(<Board initialTasks={mockTasks} />);
 
     expect(screen.getByRole("heading", { level: 2, name: "To Do" })).toBeInTheDocument();
-    expect(within(column("To Do")).getByText("3")).toBeInTheDocument();
-    expect(within(column("In Progress")).getByText("2")).toBeInTheDocument();
-    expect(within(column("Done")).getByText("0")).toBeInTheDocument();
+    expect(count("To Do", 3)).toHaveTextContent(/^3 tasks$/);
+    expect(count("In Progress", 2)).toHaveTextContent(/^2 tasks$/);
+    expect(count("Done", 0)).toHaveTextContent(/^0 tasks$/);
   });
 
   it("puts each card in the column that matches its status", () => {
@@ -77,8 +82,8 @@ describe("Board", () => {
 
     expect(within(column("Done")).getByRole("heading", { name: "Draft onboarding checklist" })).toBeInTheDocument();
     expect(within(column("To Do")).queryByRole("heading", { name: "Draft onboarding checklist" })).not.toBeInTheDocument();
-    expect(within(column("To Do")).getByText("2")).toBeInTheDocument();
-    expect(within(column("Done")).getByText("1")).toBeInTheDocument();
+    expect(count("To Do", 2)).toHaveTextContent(/^2 tasks$/);
+    expect(count("Done", 1)).toHaveTextContent(/^1 task$/);
     expect(within(column("Done")).queryByText("No tasks yet")).not.toBeInTheDocument();
   });
 
@@ -91,7 +96,7 @@ describe("Board", () => {
     }
 
     expect(within(column("In Progress")).getByText("No tasks yet")).toBeInTheDocument();
-    expect(within(column("In Progress")).getByText("0")).toBeInTheDocument();
+    expect(count("In Progress", 0)).toHaveTextContent(/^0 tasks$/);
     expect(within(column("Done")).getAllByRole("listitem")).toHaveLength(2);
   });
 });
