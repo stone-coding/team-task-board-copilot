@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
+import { signIn } from "./helpers/auth";
 
 const COLUMNS = ["To Do", "In Progress", "Done"];
+
+// Every page except /login and /register requires a session (#4, US1 criterion 4).
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 function countPill(page: Page, column: string, text: string) {
   return page.getByRole("region", { name: column }).getByText(text, { exact: true });
