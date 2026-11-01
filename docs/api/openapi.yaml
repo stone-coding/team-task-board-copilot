@@ -42,6 +42,7 @@ security:
 paths:
   /auth/register:
     post:
+      operationId: register
       summary: Create an account
       description: Does not log the user in; the UI redirects to the login page.
       security: []
@@ -68,6 +69,7 @@ paths:
           content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
   /auth/login:
     post:
+      operationId: login
       summary: Log in
       description: Sets the `session` cookie (httpOnly, Secure, SameSite=Lax, 7 days) and returns the same JWT for Bearer clients.
       security: []
@@ -100,6 +102,7 @@ paths:
           content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
   /auth/logout:
     post:
+      operationId: logout
       summary: Log out
       description: Clears the `session` cookie. Bearer tokens stay valid until they expire.
       security: []
@@ -107,6 +110,7 @@ paths:
         "204": { description: Session cookie cleared. }
   /auth/me:
     get:
+      operationId: getCurrentUser
       summary: Current user
       responses:
         "200":
