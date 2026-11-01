@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Team Task Board API
+  version: 1.0.0
+  description: >
+    All `/api/v1` endpoints except register, login, logout, and health require a session:
+    the `session` cookie set by login, or `Authorization: Bearer <token>`.
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    cookieAuth: { type: apiKey, in: cookie, name: session }
+  schemas:
+    User:
+      type: object
+      required: [id, email, name]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, examples: [VALIDATION_ERROR] }
+            message: { type: string }
+  responses:
+    ValidationError:
+      description: Invalid or missing body fields (code `VALIDATION_ERROR`).
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    Unauthenticated:
+      description: No valid session (code `UNAUTHENTICATED`).
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+paths:
+  /auth/register:
+    post:
+      summary: Create an account
+      description: Does not log the user in; the UI redirects to the login page.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, name, password]
+              properties:
+                email: { type: string, format: email, description: Trimmed and lowercased }
+                name: { type: string, minLength: 1, maxLength: 100 }
+                password: { type: string, minLength: 8, maxLength: 72 }
+      responses:
+        "201":
+          description: Account created.
+          content:
+            application/json:
+              schema: { type: object, required: [user], properties: { user: { $ref: "#/components/schemas/User" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "409":
+          description: Email already registered (code `EMAIL_TAKEN`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  /auth/login:
+    post:
+      summary: Log in
+      description: Sets the `session` cookie (httpOnly, Secure, SameSite=Lax, 7 days) and returns the same JWT for Bearer clients.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 1 }
+      responses:
+        "200":
+          description: Logged in.
+          headers:
+            Set-Cookie: { schema: { type: string }, description: "session=<jwt>; HttpOnly; Secure; SameSite=Lax; Path=/" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, token]
+                properties:
+                  user: { $ref: "#/components/schemas/User" }
+                  token: { type: string, description: JWT (HS256) }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401":
+          description: Wrong email or password (code `INVALID_CREDENTIALS`, same message for both).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  /auth/logout:
+    post:
+      summary: Log out
+      description: Clears the `session` cookie. Bearer tokens stay valid until they expire.
+      security: []
+      responses:
+        "204": { description: Session cookie cleared. }
+  /auth/me:
+    get:
+      summary: Current user
+      responses:
+        "200":
+          description: The authenticated user.
+          content:
+            application/json:
+              schema: { type: object, required: [user], properties: { user: { $ref: "#/components/schemas/User" } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }

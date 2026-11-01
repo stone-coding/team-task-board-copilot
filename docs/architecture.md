@@ -6,13 +6,22 @@ Requirements and the data model are in [prd.md](prd.md) §6–§7; the rules are
 
 ```mermaid
 flowchart TD
-  UI["React components (src/components)"] -->|"fetch /api/v1/*"| API["Route handlers (src/app/api/v1)"]
+  Browser["Browser / API client"] --> Proxy["Proxy (src/proxy.ts): session check"]
+  Proxy -->|"no session: page"| Login["Redirect to /login?next=…"]
+  Proxy -->|"no session: /api/*"| E401["401 UNAUTHENTICATED"]
+  Proxy --> UI["React components (src/components)"]
+  UI -->|"fetch /api/v1/*"| API["Route handlers (src/app/api/v1)"]
+  API -->|"re-verify JWT"| Auth["Auth (src/server/auth): jose, bcryptjs"]
   API --> Services["Services (src/server/services)"]
   Services --> DB["Prisma client (src/server/db.ts)"]
   DB -->|"@prisma/adapter-pg"| PG[("PostgreSQL")]
 ```
 
 `src/server/db.ts` builds one `PrismaClient` with the `PrismaPg` driver adapter from `DATABASE_URL`, cached on `globalThis` outside production so Next.js hot reload does not open new connection pools.
+
+## Authentication
+
+Login issues an HS256 JWT (`src/server/auth/token.ts`) in an httpOnly, Secure, SameSite=Lax `session` cookie and returns it in the body for `Authorization: Bearer` clients. `src/proxy.ts` gates every route except `/login`, `/register`, the register/login/logout endpoints, and `/api/v1/health`; route handlers verify the token again before touching data. Details and trade-offs: [decisions/001-jwt-cookie-auth.md](decisions/001-jwt-cookie-auth.md).
 
 ## Database schema
 
