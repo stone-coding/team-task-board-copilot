@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <Link className="font-medium text-blue-700 underline dark:text-blue-400" href="/projects/demo">
         Open the demo board
       </Link>
+      <LogoutButton />
     </main>
   );
 }

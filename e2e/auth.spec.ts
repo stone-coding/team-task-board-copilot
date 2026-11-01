@@ -1,5 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { E2E_PASSWORD, signIn, uniqueEmail } from "./helpers/auth";
+
+// Next.js keeps the previous route mounted but hidden after client navigation, so match visible fields only.
+function field(page: Page, label: string) {
+  return page.getByLabel(label).filter({ visible: true });
+}
 
 test("an unauthenticated visitor is redirected to the login page", async ({ page }) => {
   await page.goto("/projects/demo");
@@ -12,16 +17,16 @@ test("register, log in, reach the board, and log out", async ({ page }) => {
   const email = uniqueEmail();
 
   await page.goto("/register");
-  await page.getByLabel("Name").fill("Ada Lovelace");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
+  await field(page, "Name").fill("Ada Lovelace");
+  await field(page, "Email").fill(email);
+  await field(page, "Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
 
   await expect(page).toHaveURL(/\/login\?registered=1$/);
   await expect(page.getByRole("status")).toHaveText("Account created. Log in to continue.");
 
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
+  await field(page, "Email").fill(email);
+  await field(page, "Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Team Task Board" })).toBeVisible();
 
@@ -40,8 +45,8 @@ test("login returns the visitor to the page they asked for", async ({ page }) =>
   await page.context().clearCookies();
 
   await page.goto("/projects/demo");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
+  await field(page, "Email").fill(email);
+  await field(page, "Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
 
   await expect(page.getByRole("heading", { level: 1, name: "Demo Project" })).toBeVisible();
@@ -52,12 +57,12 @@ test("registering a taken email shows a clear message", async ({ page }) => {
   await page.context().clearCookies();
 
   await page.goto("/register");
-  await page.getByLabel("Name").fill("Someone Else");
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(E2E_PASSWORD);
+  await field(page, "Name").fill("Someone Else");
+  await field(page, "Email").fill(email);
+  await field(page, "Password").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
 
-  await expect(page.getByRole("alert")).toHaveText("An account with this email already exists");
+  await expect(page.getByRole("alert").filter({ hasText: "An account with this email already exists" })).toBeVisible();
 });
 
 test("the login page has no horizontal scroll at 375px", async ({ page }) => {
