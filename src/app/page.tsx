@@ -8,6 +8,9 @@ export default function Home() {
       <p className="text-zinc-600 dark:text-zinc-400">
         Group work into projects and move tasks from To Do to Done.
       </p>
+      <Link className="font-medium text-blue-700 underline dark:text-blue-400" href="/projects">
+        Your projects
+      </Link>
       <Link className="font-medium text-blue-700 underline dark:text-blue-400" href="/projects/demo">
         Open the demo board
       </Link>
