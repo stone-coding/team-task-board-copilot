@@ -18,18 +18,23 @@ export function CreateProjectForm() {
     const form = event.currentTarget;
     setPending(true);
     setError(null);
-    const response = await fetch("/api/v1/projects", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: new FormData(form).get("name") }),
-    });
-    if (response.ok) {
-      form.reset();
-      router.refresh();
-    } else {
-      setError(await readApiErrorMessage(response));
+    try {
+      const response = await fetch("/api/v1/projects", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: new FormData(form).get("name") }),
+      });
+      if (response.ok) {
+        form.reset();
+        router.refresh();
+      } else {
+        setError(await readApiErrorMessage(response));
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setPending(false);
     }
-    setPending(false);
   }
 
   return (

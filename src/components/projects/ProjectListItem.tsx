@@ -39,13 +39,18 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
   async function handleConfirm() {
     setPending(true);
     setError(null);
-    const response = await fetch(`/api/v1/projects/${encodeURIComponent(project.id)}`, { method: "DELETE" });
-    if (response.ok) {
-      router.refresh();
-      return;
+    try {
+      const response = await fetch(`/api/v1/projects/${encodeURIComponent(project.id)}`, { method: "DELETE" });
+      if (response.ok) {
+        router.refresh();
+        return;
+      }
+      setError(await readApiErrorMessage(response));
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setPending(false);
     }
-    setError(await readApiErrorMessage(response));
-    setPending(false);
   }
 
   return (
