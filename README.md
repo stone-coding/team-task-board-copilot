@@ -15,10 +15,11 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 
 | Area | State |
 |---|---|
-| Kanban board with mock data (#6) | Implemented on feature branch; PR pending: [`feature/6-kanban-board`](https://github.com/stone-coding/team-task-board-copilot/tree/feature/6-kanban-board) |
-| Database: Prisma 7 + PostgreSQL (#1) | Implemented on branch; PR pending: `chore/1-prisma-setup` |
+| Database: Prisma 7 + PostgreSQL (#1) | Merged into `main` |
+| Kanban board with mock data (#6) | Merged into `main` |
+| Registration and login with JWT (#4) | In review: [PR #17](https://github.com/stone-coding/team-task-board-copilot/pull/17) |
+| Projects API and list page (#5) | In progress |
 | CI pipeline (#2), Vercel deployment (#3) | Planned |
-| Auth (#4), projects API and list page (#5) | Planned |
 
 There is no live deployment yet; Vercel preview and production URLs arrive with #3.
 
@@ -52,10 +53,11 @@ npm ci
 cp .env.example .env
 docker compose up -d --wait
 npx prisma migrate dev
+npm run db:test:migrate
 npx prisma generate
 ```
 
-`migrate dev` applies `prisma/migrations/`. Then run `npx prisma generate` to generate the client into `src/generated/prisma/` (gitignored); Prisma 7 does not do this during `migrate dev`. After any schema change, run `npx prisma generate` again. Stop the database with `docker compose down` (add `-v` to delete its data).
+`migrate dev` applies `prisma/migrations/` to the development database. `npm run db:test:migrate` applies the same migrations to the test database (`TEST_DATABASE_URL`); without it the integration tests fail with "The table `public.User` does not exist". Then run `npx prisma generate` to generate the client into `src/generated/prisma/` (gitignored); Prisma 7 does not do this during `migrate dev`. After any schema change, run `npx prisma generate` and `npm run db:test:migrate` again. Stop the database with `docker compose down` (add `-v` to delete its data).
 
 **4. Install the Playwright browser** (once, only needed for end-to-end tests).
 
@@ -69,7 +71,11 @@ npx playwright install chromium
 npm run dev
 ```
 
-**6. Open the app** at http://localhost:3000. The demo board at **http://localhost:3000/projects/demo** works on the `feature/6-kanban-board` branch, **not yet on `main`** (it reaches `main` when #6 is merged). To try it now, run `git switch feature/6-kanban-board` before `npm run dev`:
+**6. Create an account and log in.** Every page except `/login` and `/register` requires a session; signed-out visitors are redirected to `/login`.
+- Open http://localhost:3000/register, enter your name, an email, and a password of at least 8 characters, and submit.
+- You land on `/login`; log in with the same email and password.
+
+**7. Open the demo board** at **http://localhost:3000/projects/demo** (mock data until #8):
 - Change a card's **Status** dropdown: the card moves to that column and the counts update.
 - An empty column shows **"No tasks yet"** (Done starts empty).
 - Below 768px the columns stack vertically.
@@ -82,7 +88,7 @@ Stop the server with `Ctrl+C`.
 ```bash
 npm run lint        # ESLint
 npm run typecheck   # Next.js route types + TypeScript
-npm test            # Vitest unit and component tests
+npm test            # Vitest unit, component, and integration tests (needs Postgres running and step 3)
 npm run build       # production build
 npm run test:e2e    # Playwright end-to-end tests (builds and starts the app on port 3000)
 ```
@@ -102,12 +108,14 @@ src/app/                    Routes: pages, layouts, and (later) API route handle
 src/components/<feature>/   UI components, with tests next to them
 src/lib/                    Shared types, mock data, pure logic
 tests/unit/                 Cross-module unit tests
+tests/integration/          API + database tests (use the test database)
+scripts/                    Developer scripts (test-database migration)
 e2e/                        Playwright specs
 docs/                       PRD and mockups; later API docs, architecture, sprint notes
 AGENTS.md, DESIGN.md        Shared rules and visual spec
 ```
 
-`prisma/` holds the schema and migrations, and `src/server/db.ts` exports the shared Prisma client. `AGENTS.md` §3 lists the other planned additions (`tests/integration/`, `.github/`).
+`prisma/` holds the schema and migrations, and `src/server/db.ts` exports the shared Prisma client. `AGENTS.md` §3 lists the other planned additions (`.github/`).
 
 ## Contributing
 
@@ -129,7 +137,9 @@ The full rules are in [AGENTS.md](AGENTS.md).
 | `npm test` crashes before running tests | Upgrade to Node 22.12 or later |
 | `Cannot find module '@/generated/prisma/client'` | Run `npx prisma generate` |
 | `docker compose up` fails: port 5432 is already allocated | Another Postgres is running; stop it, or map another host port and update `DATABASE_URL` in `.env` |
-| `/projects/demo` returns "not found" | The board is on `feature/6-kanban-board`, not yet on `main`: run `git switch feature/6-kanban-board` |
+| `npm test`: "The table `public.User` does not exist" | The test database has no tables: run `npm run db:test:migrate` |
+| `npm test`: "Can't reach database server" | Start Postgres with `docker compose up -d --wait` |
+| `/projects/demo` sends you to `/login` | You are signed out: register at `/register`, then log in (step 6) |
 
 ## HW3
 
