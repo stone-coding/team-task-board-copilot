@@ -55,4 +55,15 @@ describe("CreateProjectForm", () => {
     expect(refresh).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Create project" })).toBeEnabled();
   });
+
+  it("shows an error and allows retrying when the request fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    render(<CreateProjectForm />);
+    await submit("Roadmap");
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+    expect(screen.getByLabelText("Project name")).toHaveValue("Roadmap");
+    expect(screen.getByRole("button", { name: "Create project" })).toBeEnabled();
+    expect(refresh).not.toHaveBeenCalled();
+  });
 });

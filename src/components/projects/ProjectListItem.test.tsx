@@ -71,4 +71,17 @@ describe("ProjectListItem", () => {
     expect(screen.getByRole("link", { name: "Roadmap" })).toBeInTheDocument();
     expect(refresh).not.toHaveBeenCalled();
   });
+
+  it("shows an error and allows retrying when the delete request fails", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    const user = renderItem();
+
+    await user.click(screen.getByRole("button", { name: "Delete Roadmap" }));
+    await user.click(screen.getByRole("button", { name: "Confirm delete Roadmap" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.");
+    expect(screen.getByRole("button", { name: "Confirm delete Roadmap" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Roadmap" })).toBeInTheDocument();
+    expect(refresh).not.toHaveBeenCalled();
+  });
 });
