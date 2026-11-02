@@ -59,6 +59,20 @@ describe("ProjectListItem", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it("keeps the confirmation disabled while the list refreshes after deleting", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const user = renderItem();
+
+    await user.click(screen.getByRole("button", { name: "Delete Roadmap" }));
+    await user.click(screen.getByRole("button", { name: "Confirm delete Roadmap" }));
+    await user.click(screen.getByRole("button", { name: "Confirm delete Roadmap" }));
+
+    expect(screen.getByRole("button", { name: "Confirm delete Roadmap" })).toBeDisabled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("shows an error and keeps the project when deletion fails", async () => {
     const body = { error: { code: "INTERNAL_ERROR", message: "Something went wrong. Please try again." } };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 500 })));
