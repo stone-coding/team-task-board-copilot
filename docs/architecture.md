@@ -10,12 +10,15 @@ flowchart TD
   Proxy -->|"no session: page"| Login["Redirect to /login?next=…"]
   Proxy -->|"no session: /api/*"| E401["401 UNAUTHENTICATED"]
   Proxy --> UI["React components (src/components)"]
-  UI -->|"fetch /api/v1/*"| API["Route handlers (src/app/api/v1)"]
+  UI -->|"client components: fetch /api/v1/*"| API["Route handlers (src/app/api/v1)"]
+  UI -->|"server components: initial data"| Services
   API -->|"re-verify JWT"| Auth["Auth (src/server/auth): jose, bcryptjs"]
   API --> Services["Services (src/server/services)"]
   Services --> DB["Prisma client (src/server/db.ts)"]
   DB -->|"@prisma/adapter-pg"| PG[("PostgreSQL")]
 ```
+
+Server components read their initial data by calling the same services directly, with the user id from `getCurrentUserId()` (`src/server/auth/current-user.ts`). Client components change data only through `/api/v1`, then call `router.refresh()` to re-render. Each service function takes the owner's user id and filters every query on it, so another user's resource looks exactly like a missing one (404). Route handlers are wrapped in `withErrorHandling` (`src/server/http.ts`), which logs unexpected errors on the server and returns a generic `500 INTERNAL_ERROR`.
 
 `src/server/db.ts` builds one `PrismaClient` with the `PrismaPg` driver adapter from `DATABASE_URL`, cached on `globalThis` outside production so Next.js hot reload does not open new connection pools.
 
