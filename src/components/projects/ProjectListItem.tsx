@@ -48,9 +48,9 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
       setError(await readApiErrorMessage(response));
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
-      setPending(false);
     }
+    // Only failures re-enable the buttons; on success they stay disabled until the refresh removes the item.
+    setPending(false);
   }
 
   return (
