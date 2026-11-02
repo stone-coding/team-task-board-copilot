@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ZodError } from "zod";
+import { GENERIC_ERROR_MESSAGE } from "@/lib/api-error";
 
 export function jsonError(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
@@ -23,7 +24,7 @@ export function withErrorHandling<Args extends unknown[]>(handler: (...args: Arg
       return await handler(...args);
     } catch (error) {
       console.error("Unhandled API error", error);
-      return jsonError(500, "INTERNAL_ERROR", "Something went wrong. Please try again.");
+      return jsonError(500, "INTERNAL_ERROR", GENERIC_ERROR_MESSAGE);
     }
   };
 }

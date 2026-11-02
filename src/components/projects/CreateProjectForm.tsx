@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 import { FormError } from "@/components/ui/FormError";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { TextField } from "@/components/ui/TextField";
-import { readApiErrorMessage } from "@/lib/api-error";
+import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
 import { PROJECT_NAME_MAX_LENGTH } from "@/lib/project-schemas";
 
 export function CreateProjectForm() {
@@ -31,7 +31,7 @@ export function CreateProjectForm() {
         setError(await readApiErrorMessage(response));
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(GENERIC_ERROR_MESSAGE);
     } finally {
       setPending(false);
     }

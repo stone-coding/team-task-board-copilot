@@ -1,4 +1,4 @@
-const FALLBACK_MESSAGE = "Something went wrong. Please try again.";
+export const GENERIC_ERROR_MESSAGE = "Something went wrong. Please try again.";
 
 /** Reads the message from an `{ error: { code, message } }` API response. */
 export async function readApiErrorMessage(response: Response): Promise<string> {
@@ -13,5 +13,5 @@ export async function readApiErrorMessage(response: Response): Promise<string> {
   } catch {
     // Non-JSON body: fall through to the generic message.
   }
-  return FALLBACK_MESSAGE;
+  return GENERIC_ERROR_MESSAGE;
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormError } from "@/components/ui/FormError";
-import { readApiErrorMessage } from "@/lib/api-error";
+import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
 import type { Project } from "@/lib/projects";
 
 type ProjectListItemProps = {
@@ -47,7 +47,7 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
       }
       setError(await readApiErrorMessage(response));
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(GENERIC_ERROR_MESSAGE);
     }
     // Only failures re-enable the buttons; on success they stay disabled until the refresh removes the item.
     setPending(false);
