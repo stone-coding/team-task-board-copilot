@@ -6,7 +6,18 @@ describe("safeNextPath", () => {
     expect(safeNextPath("/projects/demo?tab=1")).toBe("/projects/demo?tab=1");
   });
 
-  it.each([undefined, "", "https://evil.example", "//evil.example", "/\\evil.example", "projects", ["/a", "/b"]])(
+  it.each([
+    undefined,
+    "",
+    "https://evil.example",
+    "//evil.example",
+    "/\\evil.example",
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "/\r/evil.example",
+    "projects",
+    ["/a", "/b"],
+  ])(
     "falls back to / for %j to prevent open redirects",
     (value) => {
       expect(safeNextPath(value)).toBe("/");
