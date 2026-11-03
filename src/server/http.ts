@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ZodError } from "zod";
+import { GENERIC_ERROR_MESSAGE } from "@/lib/api-error";
 
 export function jsonError(status: number, code: string, message: string) {
   return NextResponse.json({ error: { code, message } }, { status });
@@ -7,6 +8,25 @@ export function jsonError(status: number, code: string, message: string) {
 
 export function unauthenticated() {
   return jsonError(401, "UNAUTHENTICATED", "Authentication required");
+}
+
+export function notFoundError(message: string) {
+  return jsonError(404, "NOT_FOUND", message);
+}
+
+/**
+ * Wraps a route handler so unexpected failures (for example, the database being down) return a generic 500
+ * in the standard error shape instead of leaking details. The error is logged server-side only.
+ */
+export function withErrorHandling<Args extends unknown[]>(handler: (...args: Args) => Promise<Response>) {
+  return async (...args: Args): Promise<Response> => {
+    try {
+      return await handler(...args);
+    } catch (error) {
+      console.error("Unhandled API error", error);
+      return jsonError(500, "INTERNAL_ERROR", GENERIC_ERROR_MESSAGE);
+    }
+  };
 }
 
 export function validationError(error: ZodError) {

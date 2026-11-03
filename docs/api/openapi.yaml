@@ -19,6 +19,13 @@ components:
         id: { type: string }
         email: { type: string, format: email }
         name: { type: string }
+    Project:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id: { type: string }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        createdAt: { type: string, format: date-time }
     Error:
       type: object
       required: [error]
@@ -36,6 +43,18 @@ components:
     Unauthenticated:
       description: No valid session (code `UNAUTHENTICATED`).
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    ProjectNotFound:
+      description: No project with this id owned by the caller (code `NOT_FOUND`). Another user's project also returns 404.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    InternalError:
+      description: Unexpected server error, for example the database is unavailable (code `INTERNAL_ERROR`, generic message).
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema: { type: string }
 security:
   - bearerAuth: []
   - cookieAuth: []
@@ -119,3 +138,66 @@ paths:
             application/json:
               schema: { type: object, required: [user], properties: { user: { $ref: "#/components/schemas/User" } } }
         "401": { $ref: "#/components/responses/Unauthenticated" }
+  /projects:
+    get:
+      operationId: listProjects
+      summary: List your projects
+      description: Only the caller's projects, newest first.
+      responses:
+        "200":
+          description: The caller's projects.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects]
+                properties:
+                  projects: { type: array, items: { $ref: "#/components/schemas/Project" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      operationId: createProject
+      summary: Create a project
+      description: The caller becomes the owner; any `ownerId` in the body is ignored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80, description: Trimmed before validation }
+      responses:
+        "201":
+          description: Project created.
+          content:
+            application/json:
+              schema: { type: object, required: [project], properties: { project: { $ref: "#/components/schemas/Project" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /projects/{projectId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: getProject
+      summary: Get one of your projects
+      responses:
+        "200":
+          description: The project.
+          content:
+            application/json:
+              schema: { type: object, required: [project], properties: { project: { $ref: "#/components/schemas/Project" } } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    delete:
+      operationId: deleteProject
+      summary: Delete one of your projects
+      description: Also deletes all of the project's tasks.
+      responses:
+        "204": { description: Project and its tasks deleted. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
