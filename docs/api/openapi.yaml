@@ -201,3 +201,20 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/ProjectNotFound" }
         "500": { $ref: "#/components/responses/InternalError" }
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Public. Confirms the app is running and can reach the database; used to verify deployments.
+      security: []
+      responses:
+        "200":
+          description: The database answered.
+          content:
+            application/json:
+              schema: { type: object, required: [status, database], properties: { status: { const: ok }, database: { const: ok } } }
+        "503":
+          description: The database is unreachable; details are logged server-side only.
+          content:
+            application/json:
+              schema: { type: object, required: [status, database], properties: { status: { const: error }, database: { const: unreachable } } }
