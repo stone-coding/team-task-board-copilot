@@ -17,9 +17,10 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 |---|---|
 | Database: Prisma 7 + PostgreSQL (#1) | Merged into `main` |
 | Kanban board with mock data (#6) | Merged into `main` |
-| Registration and login with JWT (#4) | In review: [PR #17](https://github.com/stone-coding/team-task-board-copilot/pull/17) |
-| Projects API and list page (#5) | In progress |
-| CI pipeline (#2), Vercel deployment (#3) | Planned |
+| Registration and login with JWT (#4) | Merged into `main` |
+| Projects API and list page (#5) | Merged into `main` |
+| CI pipeline (#2) | GitHub Actions on every PR to `main`; required to merge |
+| Vercel deployment (#3) | Planned |
 
 There is no live deployment yet; Vercel preview and production URLs arrive with #3.
 
@@ -101,6 +102,8 @@ npm run lint && npm run typecheck && npm test && npm run build && npm run test:e
 
 To run the production build locally: `npm run build && npm run start`.
 
+**CI.** `.github/workflows/ci.yml` runs the same checks on every pull request to `main` and every push to it, in three jobs: lint + typecheck → unit and integration tests (Postgres service, `npm run db:test:migrate`) → build + Playwright E2E (Postgres service, `prisma migrate deploy`). Each job needs the previous one, and branch protection on `main` requires all three. A failed E2E run uploads the Playwright report as an artifact.
+
 ## Project structure
 
 ```
@@ -111,11 +114,12 @@ tests/unit/                 Cross-module unit tests
 tests/integration/          API + database tests (use the test database)
 scripts/                    Developer scripts (test-database migration)
 e2e/                        Playwright specs
+.github/workflows/          CI (GitHub Actions)
 docs/                       PRD and mockups; later API docs, architecture, sprint notes
 AGENTS.md, DESIGN.md        Shared rules and visual spec
 ```
 
-`prisma/` holds the schema and migrations, and `src/server/db.ts` exports the shared Prisma client. `AGENTS.md` §3 lists the other planned additions (`.github/`).
+`prisma/` holds the schema and migrations, and `src/server/db.ts` exports the shared Prisma client.
 
 ## Contributing
 
