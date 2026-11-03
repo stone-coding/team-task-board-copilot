@@ -1,6 +1,6 @@
 # AGENTS.md — Team Task Board
 
-<!-- Shared rules for AI assistants and humans. Maintainers: Haomiao Shi and Tyler Sarna · v4 (§12).
+<!-- Shared rules for AI assistants and humans. Maintainers: Haomiao Shi and Tyler Sarna · v5 (§12).
      Tool: Visual Studio Code + GitHub Copilot Chat (§11). Loads on every request: keep under ~200 lines and link to docs/.
      Change only through its own reviewed PR; revisit at every retro. When partners disagree, this file is the tiebreaker. -->
 
@@ -41,11 +41,11 @@ Major versions: **Next.js 16** (App Router), **React 19**, **TypeScript 5** (str
 |---|---|---|
 | Local dev / local tests | Postgres in `docker-compose.yml` (from #1; `docker compose up -d`), separate test database for integration tests | `.env` (gitignored) |
 | CI | Postgres service container in GitHub Actions, empty per run | workflow env, no real secrets |
-| Vercel preview | Supabase **non-production** project | Vercel Preview env vars |
-| Production | Supabase **production** project | Vercel Production env vars |
+| Vercel preview | Neon **branch per preview deployment** (created by the Neon integration) | Vercel Preview env vars |
+| Production | Neon **main branch** | Vercel Production env vars |
 
-- Hosted target is **Supabase** (planned, #3). **Open conflict:** `docs/prd.md` §7 and the #3 title say Neon. The #3 owner resolves it with the partner and updates PRD/issue in that PR; until then write no provider-specific code.
-- Supabase: migrations need a direct (non-pooled) connection; the app may use the pooled URL. #3 names these variables in `.env.example` (names and placeholders only).
+- Hosted target is **Neon** via the Vercel Marketplace integration (#3), matching `docs/prd.md` §7. The app needs no Neon-specific code: it uses `@prisma/adapter-pg` with `DATABASE_URL`.
+- Neon: the app uses the pooled `DATABASE_URL`; migrations use the direct `DATABASE_URL_UNPOOLED`. The integration sets both in Vercel; `.env.example` names them (placeholders only).
 
 **Prisma 7** (your training data is probably Prisma 5/6):
 - Generator `provider = "prisma-client"`, `output = "../src/generated/prisma"`; never legacy `prisma-client-js`. Import from `@/generated/prisma/client`. `/src/generated/prisma/` must be in `.gitignore`; regenerate, never edit or commit.
@@ -132,13 +132,13 @@ docs/                       prd.md, mockups/, api/openapi.yaml, architecture.md,
 - **Sprint records** in `docs/sprints/sprint-N/`: `planning.md` (goal, issues, estimates, PO/SM), `standups.md`, `review.md`, `retro.md`. Async standups, 3+ per partner per sprint: `Date · Yesterday · Today · Blockers` (with issue numbers). Copilot may draft from `git log`; humans confirm and post.
 
 **Backlog map** (never guess numbers; the issue body is the source of acceptance criteria; if issue and PRD disagree, ask):
-#1 Prisma + PostgreSQL schema · #2 CI pipeline · #3 Vercel deployment with previews and hosted DB (title says Neon; see §2) · #4 Registration/login with JWT (US1) · #5 Projects API + list page (US2) · #6 Three-column board with mock data (US4) — Sprint 1.
+#1 Prisma + PostgreSQL schema · #2 CI pipeline · #3 Vercel deployment with previews and Neon · #4 Registration/login with JWT (US1) · #5 Projects API + list page (US2) · #6 Three-column board with mock data (US4) — Sprint 1.
 #7 Tasks CRUD API (US3, US5) · #8 Board ↔ tasks API, optimistic (US4) · #9 Task create/edit/delete UI (US3) · #10 Security scanning · #11 OpenAPI docs at /api/docs (US5) · #12 E2E core journey · #13 README, diagrams, setup guide — Sprint 2.
 
 ## 8. CI/CD and deployment
 - `.github/workflows/ci.yml` on every PR to `main`: `npm ci` (Node 22) → lint + typecheck → unit + integration (Postgres service, `prisma migrate deploy`) → build → Playwright E2E. Security job (#10): CodeQL, `npm audit`, Dependabot. Branch protection requires these checks where permissions allow.
 - CI never uses production secrets or data. Keep failure logs actionable; never hide or retry away failures.
-- Vercel: a preview deploy per PR (Supabase non-production DB), production deploys from `main`. Production migrations run as a written-down step (`npx prisma migrate deploy` with production credentials, by a human). Server-only variables never use `NEXT_PUBLIC_`.
+- Vercel: a preview deploy per PR (its own Neon branch), production deploys from `main`. `vercel.json` runs `scripts/vercel-build.mjs`: `prisma generate` → `prisma migrate deploy` (direct URL) → `next build`, so every deploy migrates its own database. Migrations must therefore be backward compatible with the running version. Server-only variables never use `NEXT_PUBLIC_`.
 - CI/deploy work is done only after checking the actual GitHub Actions run, Vercel deployment, and `/api/v1/health`.
 
 ## 9. Security and accessibility
@@ -168,5 +168,6 @@ Not required, and never a reason to add dependencies without an issue:
 
 ## 12. Maintenance and changelog
 Either partner proposes changes through an issue and a PR that the other reviews. Update the PRD, OpenAPI, `DESIGN.md`, and this file together when decisions change. Personal HW3 experiments and reflections stay out of this file.
+- **v5 (2026-11-03, #3):** hosted database is Neon (resolves the Supabase/Neon conflict); migrations run during each Vercel build instead of a manual production step.
 - **v4 (2026-10-28, shared):** merged Tyler's v3 and Haomiao's v2. Added environment isolation and the Supabase plan (Neon conflict flagged), test locations including `tests/integration/`, assignee ownership, templates, seed, health check, OpenAPI, architecture docs, async standups, CI/CD and Vercel rules, and optional MCP/browser/pre-commit practices.
 - **v3 (Tyler):** issue body as criteria source, R0 plan-only reply, R3 test-first gate, Prisma 7 rules. **v2 (Haomiao, HW3):** separate `test(#N)` commit, structure checklist, heading-only `<h2>`, zsh rule.
