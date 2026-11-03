@@ -20,9 +20,9 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 | Registration and login with JWT (#4) | Merged into `main` |
 | Projects API and list page (#5) | Merged into `main` |
 | CI pipeline (#2) | GitHub Actions on every PR to `main`; required to merge |
-| Vercel deployment (#3) | Planned |
+| Vercel deployment (#3) | Production on Vercel with Neon Postgres; a preview deployment per PR |
 
-There is no live deployment yet; Vercel preview and production URLs arrive with #3.
+**Live app:** https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app (register, then log in). Health check: [team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/v1/health](https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/v1/health).
 
 ## Prerequisites
 
@@ -103,6 +103,8 @@ npm run lint && npm run typecheck && npm test && npm run build && npm run test:e
 To run the production build locally: `npm run build && npm run start`.
 
 **CI.** `.github/workflows/ci.yml` runs the same checks on every pull request to `main` and every push to it, in three jobs: lint + typecheck → unit and integration tests (Postgres service, `npm run db:test:migrate`) → build + Playwright E2E (Postgres service, `prisma migrate deploy`). Each job needs the previous one, and branch protection on `main` requires all three. A failed E2E run uploads the Playwright report as an artifact.
+
+**Deployment.** Vercel builds every push: pull requests get a preview URL (posted on the PR, behind Vercel login), and `main` deploys to production. `vercel.json` runs `scripts/vercel-build.mjs`, which generates the Prisma client, applies migrations with `prisma migrate deploy` over Neon's direct connection (`DATABASE_URL_UNPOOLED`), then runs `next build`. Each preview deployment gets its own Neon database branch; production uses the main branch. `DATABASE_URL`/`DATABASE_URL_UNPOOLED` come from the Neon integration and `JWT_SECRET` is set per environment in Vercel (all Sensitive). After a deploy, check `/api/v1/health`.
 
 ## Project structure
 
