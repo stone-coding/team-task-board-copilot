@@ -210,9 +210,10 @@ describe("Board", () => {
     render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.click(screen.getByRole("button", { name: "Edit Set up project repository" }));
-    await user.clear(screen.getByRole("textbox", { name: "Title" }));
-    await user.type(screen.getByRole("textbox", { name: "Title" }), "Set up the repository");
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    const editForm = within(screen.getByRole("form", { name: "Edit Set up project repository" }));
+    await user.clear(editForm.getByRole("textbox", { name: "Title" }));
+    await user.type(editForm.getByRole("textbox", { name: "Title" }), "Set up the repository");
+    await user.click(editForm.getByRole("button", { name: "Save" }));
 
     expect(await within(column("In Progress")).findByRole("heading", { name: "Set up the repository" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Status for Set up the repository" })).toHaveValue("IN_PROGRESS");
