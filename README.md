@@ -20,7 +20,8 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 | Registration and login with JWT (#4) | Merged into `main` |
 | Projects API and list page (#5) | Merged into `main` |
 | Tasks API (#7) | Merged into `main` |
-| Board connected to the tasks API, optimistic status changes (#8) | This PR |
+| Board connected to the tasks API, optimistic status changes (#8) | In review |
+| Task create, edit, and delete on the board (#9) | In review |
 | CI pipeline (#2) | GitHub Actions on every PR to `main`; required to merge |
 | Vercel deployment (#3) | Production on Vercel with Neon Postgres; a preview deployment per PR |
 
@@ -80,6 +81,8 @@ npm run dev
 
 **7. Open a board:** create a project at http://localhost:3000/projects and click its name. Tasks come from the tasks API (#7, #8):
 - Change a card's **Status** dropdown: the card moves to that column at once, the counts update, and the change is saved. If saving fails, the card moves back and an error appears.
+- Add a task with the form above the columns (title required, description optional); it appears in To Do.
+- Each card has **Edit** (change title and description) and **Delete** (asks for confirmation first).
 - An empty column shows **"No tasks yet"**.
 - Below 768px the columns stack vertically.
 - An unknown project, such as `/projects/other`, shows the not-found page.
