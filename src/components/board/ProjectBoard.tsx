@@ -36,7 +36,7 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl p-4">
-        <Board key={project.id} initialTasks={tasks} />
+        <Board key={project.id} projectId={project.id} initialTasks={tasks} />
       </main>
     </>
   );
