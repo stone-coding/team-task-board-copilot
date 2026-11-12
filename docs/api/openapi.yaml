@@ -26,6 +26,23 @@ components:
         id: { type: string }
         name: { type: string, minLength: 1, maxLength: 80 }
         createdAt: { type: string, format: date-time }
+    TaskStatus:
+      type: string
+      enum: [TODO, IN_PROGRESS, DONE]
+    Task:
+      type: object
+      required: [id, projectId, title, status]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        title: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000, description: Omitted when the task has no description }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+    TaskResponse:
+      type: object
+      required: [task]
+      properties:
+        task: { $ref: "#/components/schemas/Task" }
     Error:
       type: object
       required: [error]
@@ -46,12 +63,20 @@ components:
     ProjectNotFound:
       description: No project with this id owned by the caller (code `NOT_FOUND`). Another user's project also returns 404.
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    TaskNotFound:
+      description: No task with this id in a project owned by the caller (code `NOT_FOUND`). Another user's task also returns 404.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
     InternalError:
       description: Unexpected server error, for example the database is unavailable (code `INTERNAL_ERROR`, generic message).
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
   parameters:
     ProjectId:
       name: projectId
+      in: path
+      required: true
+      schema: { type: string }
+    TaskId:
+      name: taskId
       in: path
       required: true
       schema: { type: string }
@@ -200,6 +225,88 @@ paths:
         "204": { description: Project and its tasks deleted. }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /projects/{projectId}/tasks:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listTasks
+      summary: List a project's tasks
+      description: All tasks of one of your projects, oldest first.
+      responses:
+        "200":
+          description: The project's tasks.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tasks]
+                properties:
+                  tasks: { type: array, items: { $ref: "#/components/schemas/Task" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      operationId: createTask
+      summary: Create a task
+      description: New tasks always start in `TODO`; a `status` in the body is ignored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string, minLength: 1, maxLength: 120, description: Trimmed before validation }
+                description:
+                  type: [string, "null"]
+                  maxLength: 2000
+                  description: Optional; trimmed, and blank or null means no description
+      responses:
+        "201":
+          description: Task created.
+          content: { application/json: { schema: { $ref: "#/components/schemas/TaskResponse" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /tasks/{taskId}:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    patch:
+      operationId: updateTask
+      summary: Update a task
+      description: Change the title, description, or status. Send at least one field; omitted fields stay unchanged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                title: { type: string, minLength: 1, maxLength: 120, description: Trimmed before validation }
+                description:
+                  type: [string, "null"]
+                  maxLength: 2000
+                  description: Blank or null removes the description
+                status: { $ref: "#/components/schemas/TaskStatus" }
+      responses:
+        "200":
+          description: The updated task.
+          content: { application/json: { schema: { $ref: "#/components/schemas/TaskResponse" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    delete:
+      operationId: deleteTask
+      summary: Delete a task
+      responses:
+        "204": { description: Task deleted. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
         "500": { $ref: "#/components/responses/InternalError" }
   /health:
     get:
