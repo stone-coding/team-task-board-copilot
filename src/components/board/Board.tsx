@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer } from "react";
+import { AddTaskForm } from "@/components/board/AddTaskForm";
 import { BoardColumn } from "@/components/board/BoardColumn";
 import { FormError } from "@/components/ui/FormError";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
@@ -9,6 +10,7 @@ import { TASK_STATUSES } from "@/lib/task-status";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
 type BoardProps = {
+  projectId: string;
   initialTasks: Task[];
 };
 
@@ -25,7 +27,7 @@ async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
   return body.task;
 }
 
-export function Board({ initialTasks }: BoardProps) {
+export function Board({ projectId, initialTasks }: BoardProps) {
   const [{ tasks, error }, dispatch] = useReducer(boardReducer, { tasks: initialTasks, error: null });
   const tasksByStatus = groupTasksByStatus(tasks);
 
@@ -52,6 +54,7 @@ export function Board({ initialTasks }: BoardProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      <AddTaskForm projectId={projectId} onCreated={(task) => dispatch({ type: "taskAdded", task })} />
       <FormError message={error} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {TASK_STATUSES.map((status) => (
@@ -60,6 +63,8 @@ export function Board({ initialTasks }: BoardProps) {
             status={status}
             tasks={tasksByStatus[status]}
             onStatusChange={handleStatusChange}
+            onTaskSaved={(task) => dispatch({ type: "taskUpdated", task })}
+            onTaskDeleted={(taskId) => dispatch({ type: "taskRemoved", taskId })}
           />
         ))}
       </div>

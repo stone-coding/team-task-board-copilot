@@ -110,3 +110,30 @@ describe("boardReducer", () => {
     expect(initial.tasks[0].status).toBe("TODO");
   });
 });
+
+describe("boardReducer: creating, editing, and deleting tasks", () => {
+  const initial: BoardState = { tasks, error: "Old error" };
+
+  it("adds a created task at the end and clears the error", () => {
+    const created: Task = { id: "d", projectId: "p", title: "D", status: "TODO" };
+    const state = boardReducer(initial, { type: "taskAdded", task: created });
+
+    expect(state.tasks.map((task) => task.id)).toEqual(["a", "b", "c", "d"]);
+    expect(state.error).toBeNull();
+  });
+
+  it("replaces an edited task in place", () => {
+    const edited: Task = { id: "b", projectId: "p", title: "B renamed", description: "Notes", status: "IN_PROGRESS" };
+    const state = boardReducer(initial, { type: "taskUpdated", task: edited });
+
+    expect(state.tasks).toEqual([tasks[0], edited, tasks[2]]);
+    expect(state.error).toBeNull();
+  });
+
+  it("removes a deleted task", () => {
+    const state = boardReducer(initial, { type: "taskRemoved", taskId: "a" });
+
+    expect(state.tasks.map((task) => task.id)).toEqual(["b", "c"]);
+    expect(state.error).toBeNull();
+  });
+});

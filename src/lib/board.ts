@@ -19,9 +19,12 @@ export type BoardState = { tasks: Task[]; error: string | null };
 export type BoardAction =
   | { type: "statusChangeStarted"; taskId: string; status: TaskStatus }
   | { type: "statusChangeSucceeded"; task: Task }
-  | { type: "statusChangeFailed"; taskId: string; status: TaskStatus; previousStatus: TaskStatus; message: string };
+  | { type: "statusChangeFailed"; taskId: string; status: TaskStatus; previousStatus: TaskStatus; message: string }
+  | { type: "taskAdded"; task: Task }
+  | { type: "taskUpdated"; task: Task }
+  | { type: "taskRemoved"; taskId: string };
 
-/** Optimistic board state: a status change moves the card at once and is rolled back if saving fails. */
+/** Board state: a status change moves the card at once and is rolled back if saving fails. */
 export function boardReducer(state: BoardState, action: BoardAction): BoardState {
   switch (action.type) {
     case "statusChangeStarted":
@@ -35,5 +38,12 @@ export function boardReducer(state: BoardState, action: BoardAction): BoardState
         current?.status === action.status ? moveTask(state.tasks, action.taskId, action.previousStatus) : state.tasks;
       return { tasks, error: action.message };
     }
+    // Create, edit, and delete wait for the API, so they only apply saved results.
+    case "taskAdded":
+      return { tasks: [...state.tasks, action.task], error: null };
+    case "taskUpdated":
+      return { tasks: state.tasks.map((task) => (task.id === action.task.id ? action.task : task)), error: null };
+    case "taskRemoved":
+      return { tasks: state.tasks.filter((task) => task.id !== action.taskId), error: null };
   }
 }
