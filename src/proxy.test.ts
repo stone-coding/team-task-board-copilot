@@ -44,7 +44,16 @@ describe("auth proxy", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it.each(["/login", "/register", "/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/auth/logout", "/api/v1/health"])(
+  it.each([
+    "/login",
+    "/register",
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/api/v1/auth/logout",
+    "/api/v1/health",
+    "/api/docs",
+    "/api/docs/openapi.yaml",
+  ])(
     "leaves %s public",
     async (path) => {
       const response = await proxy(request(path));
