@@ -1,8 +1,8 @@
 # AGENTS.md — Team Task Board
 
-<!-- Shared rules for AI assistants and humans. Maintainers: Haomiao Shi and Tyler Sarna · v5 (§12).
+<!-- Shared rules for AI assistants and humans. Maintainer: Haomiao Shi (with Tyler Sarna through Sprint 1) · v6 (§12).
      Tool: Visual Studio Code + GitHub Copilot Chat (§11). Loads on every request: keep under ~200 lines and link to docs/.
-     Change only through its own reviewed PR; revisit at every retro. When partners disagree, this file is the tiebreaker. -->
+     Change only through its own self-reviewed PR (§7); revisit at every retro. This file is the tiebreaker. -->
 
 ## 0. Quick reference
 Requires **Node.js ≥ 22.12** (Vitest 5 and Prisma 7 refuse older versions).
@@ -21,11 +21,11 @@ npx prisma validate  # from #1; run `npx prisma generate` after any schema chang
 `npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e`
 
 -  **Always:** one fresh chat per issue; read the issue body first; work on the issue branch; plan before editing (R0); commit the failing test first (R3); run the definition of done before claiming done; reuse types from `src/lib/`.
--  **Ask first:** adding or upgrading a dependency not approved for the issue (§2); any command that downloads a tool or runtime (`brew install`, `npx playwright install`, `npx <uninstalled tool>`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.ts`, `playwright.config.ts`, `prisma.config.ts`, `package.json` scripts, `.vscode/`, `.github/`); changing the Prisma schema, an API contract, or files owned by the partner's open branch; any network or GitHub write. Reading the issue you implement (`gh issue view N`) is allowed.
--  **Never:** Never push directly to main, open or merge pull requests, or rewrite Git history without explicit human approval. Every PR must be reviewed by the other partner before merging; amend, rebase, or squash the failing-test commit (graded evidence); skip, delete, or weaken a test (`.skip`, `.only`, changed expectations); `@ts-ignore`, `@ts-expect-error`, `eslint-disable`; read, print, or commit `.env*` (except `.env.example`); edit `src/generated/`; `dangerouslySetInnerHTML`; run tests or seeds against production data.
+-  **Ask first:** adding or upgrading a dependency not approved for the issue (§2); any command that downloads a tool or runtime (`brew install`, `npx playwright install`, `npx <uninstalled tool>`); editing config (`next.config.ts`, `tsconfig.json`, `eslint.config.mjs`, `vitest.config.ts`, `playwright.config.ts`, `prisma.config.ts`, `package.json` scripts, `.vscode/`, `.github/`); changing the Prisma schema or an API contract; any network or GitHub write. Reading the issue you implement (`gh issue view N`) is allowed.
+-  **Never:** Never push directly to main, open or merge pull requests, or rewrite Git history without explicit human approval. Every PR must have the recorded self-review and green CI (§7) before merging; amend, rebase, or squash the failing-test commit (graded evidence); skip, delete, or weaken a test (`.skip`, `.only`, changed expectations); `@ts-ignore`, `@ts-expect-error`, `eslint-disable`; read, print, or commit `.env*` (except `.env.example`); edit `src/generated/`; `dangerouslySetInnerHTML`; run tests or seeds against production data.
 
 ## 1. Project and scope
-Team Task Board is a minimal Kanban app: users group work into projects and move tasks **To Do → In Progress → Done**. CS6983 pair project. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: Nov 3 – Nov 10, 2026.
+Team Task Board is a minimal Kanban app: users group work into projects and move tasks **To Do → In Progress → Done**. CS6983 pair project, continued solo by Haomiao Shi from Sprint 2 with the instructor's approval after Tyler Sarna left the course. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: from Nov 3, 2026, to the instructor's extended deadline.
 - Requirements (US1–US5, acceptance criteria, data model §6): `docs/prd.md`. UI spec: `DESIGN.md` and `docs/mockups/` (`board.png` 1280px, `board-mobile.png` 375px, `board.html` if you cannot view images).
 - Work tracking: GitHub Issues + Project "Team Task Board". **The issue assignee owns the issue** and the files it creates; ownership is never set in this file.
 - Out of scope unless a tracked issue adds it: drag-and-drop, WebSockets, notifications, team invitations, multi-user sharing.
@@ -126,10 +126,10 @@ docs/                       prd.md, mockups/, api/openapi.yaml, architecture.md,
 - Branch per issue from current `main`: `feature/<N>-<slug>`, `fix/…`, `chore/…`, `docs/…`.
 - Commits: `type(#N): imperative summary` (`feat`, `fix`, `test`, `refactor`, `docs`, `chore`, `ci`); body ends `Refs #N`. Use `git commit -m "<subject>" -m "<body>"`. Issue refs in code only for deliberate temporary choices: `// TODO(#8): …`.
 - Before a PR, self-review with Copilot: "review this diff for bugs, security issues, and style violations against #file:AGENTS.md and #file:DESIGN.md"; fix real issues; rerun the definition of done.
-- PRs are opened by a human from `.github/pull_request_template.md`: `[#N] Summary`; `Closes #N`; acceptance checklist; failing-test SHA; test evidence; UI screenshots; AI-usage note; partner-review checkbox. Issues use `.github/ISSUE_TEMPLATE/` (story, acceptance criteria, estimate, labels, milestone).
-- The partner reviews every PR (criteria met, tests included, AGENTS.md followed, no dead code) and **CI must be green**. Merge commits only, never squash. One issue per PR, ideally < ~300 changed lines. Each partner completes 5+ substantive reviews.
-- Pairing: one assignee per issue; never edit files on the partner's open branch; agree on shared interfaces (props, API shapes, schema) before splitting; merge often. PO and Scrum Master rotate each sprint.
-- **Sprint records** in `docs/sprints/sprint-N/`: `planning.md` (goal, issues, estimates, PO/SM), `standups.md`, `review.md`, `retro.md`. Async standups, 3+ per partner per sprint: `Date · Yesterday · Today · Blockers` (with issue numbers). Copilot may draft from `git log`; humans confirm and post.
+- PRs are opened by a human from `.github/pull_request_template.md`: `[#N] Summary`; `Closes #N`; acceptance checklist; failing-test SHA; test evidence; UI screenshots; AI-usage note; self-review checklist. Issues use `.github/ISSUE_TEMPLATE/` (story, acceptance criteria, estimate, labels, milestone).
+- **Self-review (solo, from Sprint 2):** before merging, the author reviews the final diff against the same checklist a partner used (criteria met, tests included, AGENTS.md followed, no dead code), records the result in the PR's Review section, and **CI must be green**. Merge in the GitHub UI. Merge commits only, never squash. One issue per PR, ideally < ~300 changed lines.
+- Solo workflow: Haomiao Shi is the assignee for every remaining issue and is both PO and Scrum Master. Sprint 1 PRs by Tyler Sarna and their reviews stay as they are in history.
+- **Sprint records** in `docs/sprints/sprint-N/`: `planning.md` (goal, issues, estimates, PO/SM), `standups.md`, `review.md`, `retro.md`. Async standups, 3+ per team member per sprint (Sprint 1: both partners; Sprint 2: Haomiao): `Date · Yesterday · Today · Blockers` (with issue numbers). Copilot may draft from `git log`; humans confirm and post.
 
 **Backlog map** (never guess numbers; the issue body is the source of acceptance criteria; if issue and PRD disagree, ask):
 #1 Prisma + PostgreSQL schema · #2 CI pipeline · #3 Vercel deployment with previews and Neon · #4 Registration/login with JWT (US1) · #5 Projects API + list page (US2) · #6 Three-column board with mock data (US4) — Sprint 1.
@@ -167,7 +167,8 @@ Not required, and never a reason to add dependencies without an issue:
 - **Terminal:** zsh. Quote paths with brackets (`'src/app/projects/[projectId]/page.tsx'`). Use `git ls-files` or `grep` (`rg` may be missing).
 
 ## 12. Maintenance and changelog
-Either partner proposes changes through an issue and a PR that the other reviews. Update the PRD, OpenAPI, `DESIGN.md`, and this file together when decisions change. Personal HW3 experiments and reflections stay out of this file.
+Changes go through a PR that is self-reviewed with green CI (§7). Update the PRD, OpenAPI, `DESIGN.md`, and this file together when decisions change. Personal HW3 experiments and reflections stay out of this file.
+- **v6 (2026-11-11, solo):** Tyler Sarna left the course; with the instructor's approval Haomiao Shi finishes Sprint 2 alone. Partner review is replaced by a recorded self-review plus green CI; PO/SM no longer rotate; Sprint 2 ends at the instructor's extended deadline.
 - **v5 (2026-11-03, #3):** hosted database is Neon (resolves the Supabase/Neon conflict); migrations run during each Vercel build instead of a manual production step.
 - **v4 (2026-10-28, shared):** merged Tyler's v3 and Haomiao's v2. Added environment isolation and the Supabase plan (Neon conflict flagged), test locations including `tests/integration/`, assignee ownership, templates, seed, health check, OpenAPI, architecture docs, async standups, CI/CD and Vercel rules, and optional MCP/browser/pre-commit practices.
 - **v3 (Tyler):** issue body as criteria source, R0 plan-only reply, R3 test-first gate, Prisma 7 rules. **v2 (Haomiao, HW3):** separate `test(#N)` commit, structure checklist, heading-only `<h2>`, zsh rule.

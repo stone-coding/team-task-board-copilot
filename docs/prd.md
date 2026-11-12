@@ -1,6 +1,6 @@
 # Team Task Board — Product Requirements (v1, 2026-10-25)
 
-CS6983 Project 2 (pair project). Open for partner review.
+CS6983 Project 2 (pair project; continued solo by Haomiao Shi from Sprint 2 with the instructor's approval).
 
 ## 1. Goal
 
