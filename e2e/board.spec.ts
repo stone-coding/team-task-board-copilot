@@ -80,7 +80,7 @@ test("a failed save moves the card back and shows an error", async ({ page }) =>
 
   await page.getByRole("combobox", { name: "Status for Write release notes" }).selectOption("DONE");
 
-  await expect(page.getByRole("alert")).toContainText('Could not save the status of "Write release notes"');
+  await expect(page.getByRole("alert").filter({ hasText: 'Could not save the status of "Write release notes"' })).toBeVisible();
   await expect(page.getByRole("region", { name: "To Do" })).toContainText("Write release notes");
   await expect(countPill(page, "Done", "0 tasks")).toBeVisible();
 });
@@ -108,7 +108,7 @@ test("an unknown project shows the not-found page", async ({ page }) => {
   await expect(page.getByRole("region", { name: "To Do" })).toHaveCount(0);
 });
 
-test("another user's project shows the not-found page", async ({ page, browser }) => {
+test("another user's project shows the not-found page", async ({ browser }) => {
   const otherContext = await browser.newContext();
   const otherPage = await otherContext.newPage();
   await signIn(otherPage);

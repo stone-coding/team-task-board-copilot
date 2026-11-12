@@ -15,9 +15,10 @@ function count(columnName: string, value: number) {
 
 // Answers each PATCH with the task it was asked to save, as the API does.
 function saveSucceeds() {
-  return vi.fn(async (_url: string, init: RequestInit) => {
+  return vi.fn(async (url: string, init: RequestInit) => {
     const { status } = JSON.parse(String(init.body));
-    return new Response(JSON.stringify({ task: { ...mockTasks[0], status } }), { status: 200 });
+    const task = mockTasks.find((candidate) => url.endsWith(`/${candidate.id}`));
+    return new Response(JSON.stringify({ task: { ...task, status } }), { status: 200 });
   });
 }
 
