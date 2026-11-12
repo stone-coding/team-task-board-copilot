@@ -27,7 +27,7 @@ describe("Board", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("shows the columns To Do, In Progress, Done in that order", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     expect(screen.getAllByRole("region")).toHaveLength(3);
     expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual([
@@ -38,7 +38,7 @@ describe("Board", () => {
   });
 
   it("names each column by its title only, with the count beside the heading", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     expect(screen.getByRole("heading", { level: 2, name: "To Do" })).toBeInTheDocument();
     expect(count("To Do", 3)).toHaveTextContent(/^3 tasks$/);
@@ -47,7 +47,7 @@ describe("Board", () => {
   });
 
   it("puts each card in the column that matches its status", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     expect(within(column("To Do")).getByRole("heading", { name: "Draft onboarding checklist" })).toBeInTheDocument();
     expect(within(column("To Do")).getAllByRole("listitem")).toHaveLength(3);
@@ -56,7 +56,7 @@ describe("Board", () => {
   });
 
   it("shows a card's description only when it has one", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     const withDescription = within(column("To Do")).getAllByRole("listitem")[0];
     const withoutDescription = within(column("To Do")).getAllByRole("listitem")[1];
@@ -65,14 +65,14 @@ describe("Board", () => {
   });
 
   it("shows \"No tasks yet\" in an empty column", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     expect(within(column("Done")).getByText("No tasks yet")).toBeInTheDocument();
     expect(within(column("To Do")).queryByText("No tasks yet")).not.toBeInTheDocument();
   });
 
   it("names each status dropdown after its task and lists the statuses in order", () => {
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     const select = screen.getByRole("combobox", { name: "Status for Write release notes" });
     expect(select).toHaveValue("TODO");
@@ -85,7 +85,7 @@ describe("Board", () => {
 
   it("moves a card immediately and updates both counts when its status changes", async () => {
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }),
@@ -101,7 +101,7 @@ describe("Board", () => {
 
   it("shows \"No tasks yet\" when the last card leaves a column", async () => {
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     for (const title of ["Set up project repository", "Review sprint backlog"]) {
       await user.selectOptions(screen.getByRole("combobox", { name: `Status for ${title}` }), "Done");
@@ -116,7 +116,7 @@ describe("Board", () => {
     const fetchMock = saveSucceeds();
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
 
@@ -133,7 +133,7 @@ describe("Board", () => {
     let finishSave: (response: Response) => void = () => undefined;
     vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((resolve) => (finishSave = resolve))));
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
 
@@ -148,7 +148,7 @@ describe("Board", () => {
       vi.fn(async () => new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Task not found" } }), { status: 404 })),
     );
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
 
@@ -164,7 +164,7 @@ describe("Board", () => {
   it("moves the card back and shows an error when the network fails", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("Failed to fetch"))));
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Set up project repository" }), "Done");
 
@@ -181,12 +181,52 @@ describe("Board", () => {
       .mockImplementation(saveSucceeds());
     vi.stubGlobal("fetch", fetchMock);
     const user = userEvent.setup();
-    render(<Board initialTasks={mockTasks} />);
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write release notes" }), "Done");
     await screen.findByRole("alert");
     await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write release notes" }), "In Progress");
 
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  });
+
+  it("adds a created task to To Do and updates the count", async () => {
+    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO" };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ task: created }), { status: 201 })));
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Plan launch");
+    await user.click(screen.getByRole("button", { name: "Add task" }));
+
+    expect(await within(column("To Do")).findByRole("heading", { name: "Plan launch" })).toBeInTheDocument();
+    expect(count("To Do", 4)).toHaveTextContent(/^4 tasks$/);
+  });
+
+  it("shows an edited title on the card", async () => {
+    const edited = { ...mockTasks[3], title: "Set up the repository" };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ task: edited }), { status: 200 })));
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.click(screen.getByRole("button", { name: "Edit Set up project repository" }));
+    await user.clear(screen.getByRole("textbox", { name: "Title" }));
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Set up the repository");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await within(column("In Progress")).findByRole("heading", { name: "Set up the repository" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Status for Set up the repository" })).toHaveValue("IN_PROGRESS");
+  });
+
+  it("removes a deleted card and updates the count", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.click(screen.getByRole("button", { name: "Delete Review sprint backlog" }));
+    await user.click(screen.getByRole("button", { name: "Confirm delete Review sprint backlog" }));
+
+    await waitFor(() => expect(count("In Progress", 1)).toHaveTextContent(/^1 task$/));
+    expect(screen.queryByRole("heading", { name: "Review sprint backlog" })).not.toBeInTheDocument();
   });
 });
