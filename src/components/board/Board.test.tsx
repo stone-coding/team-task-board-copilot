@@ -1,6 +1,6 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Board } from "@/components/board/Board";
 import { mockTasks } from "@/lib/mock-tasks";
 
@@ -13,7 +13,19 @@ function count(columnName: string, value: number) {
   return within(column(columnName)).getByText(String(value));
 }
 
+// Answers each PATCH with the task it was asked to save, as the API does.
+function saveSucceeds() {
+  return vi.fn(async (url: string, init: RequestInit) => {
+    const { status } = JSON.parse(String(init.body));
+    const task = mockTasks.find((candidate) => url.endsWith(`/${candidate.id}`));
+    return new Response(JSON.stringify({ task: { ...task, status } }), { status: 200 });
+  });
+}
+
 describe("Board", () => {
+  beforeEach(() => vi.stubGlobal("fetch", saveSucceeds()));
+  afterEach(() => vi.unstubAllGlobals());
+
   it("shows the columns To Do, In Progress, Done in that order", () => {
     render(<Board initialTasks={mockTasks} />);
 
@@ -98,5 +110,83 @@ describe("Board", () => {
     expect(within(column("In Progress")).getByText("No tasks yet")).toBeInTheDocument();
     expect(count("In Progress", 0)).toHaveTextContent(/^0 tasks$/);
     expect(within(column("Done")).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("saves a status change with PATCH /api/v1/tasks/:id", async () => {
+    const fetchMock = saveSucceeds();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Board initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "DONE" }),
+    });
+    await waitFor(() => expect(count("Done", 1)).toBeInTheDocument());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("moves the card before the save finishes", async () => {
+    let finishSave: (response: Response) => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((resolve) => (finishSave = resolve))));
+    const user = userEvent.setup();
+    render(<Board initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
+
+    expect(within(column("Done")).getByRole("heading", { name: "Draft onboarding checklist" })).toBeInTheDocument();
+    finishSave(new Response(JSON.stringify({ task: { ...mockTasks[0], status: "DONE" } }), { status: 200 }));
+    await waitFor(() => expect(count("Done", 1)).toBeInTheDocument());
+  });
+
+  it("moves the card back and shows an error when the API rejects the change", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Task not found" } }), { status: 404 })),
+    );
+    const user = userEvent.setup();
+    render(<Board initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      'Could not save the status of "Draft onboarding checklist": Task not found',
+    );
+    expect(within(column("To Do")).getByRole("heading", { name: "Draft onboarding checklist" })).toBeInTheDocument();
+    expect(count("To Do", 3)).toBeInTheDocument();
+    expect(within(column("Done")).getByText("No tasks yet")).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" })).toHaveValue("TODO");
+  });
+
+  it("moves the card back and shows an error when the network fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("Failed to fetch"))));
+    const user = userEvent.setup();
+    render(<Board initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Set up project repository" }), "Done");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      'Could not save the status of "Set up project repository": Something went wrong. Please try again.',
+    );
+    expect(within(column("In Progress")).getByRole("heading", { name: "Set up project repository" })).toBeInTheDocument();
+  });
+
+  it("clears the error after the next successful change", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: "INTERNAL_ERROR", message: "Boom" } }), { status: 500 }))
+      .mockImplementation(saveSucceeds());
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Board initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write release notes" }), "Done");
+    await screen.findByRole("alert");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write release notes" }), "In Progress");
+
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });
 });

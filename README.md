@@ -19,6 +19,8 @@ Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.
 | Kanban board with mock data (#6) | Merged into `main` |
 | Registration and login with JWT (#4) | Merged into `main` |
 | Projects API and list page (#5) | Merged into `main` |
+| Tasks API (#7) | Merged into `main` |
+| Board connected to the tasks API, optimistic status changes (#8) | This PR |
 | CI pipeline (#2) | GitHub Actions on every PR to `main`; required to merge |
 | Vercel deployment (#3) | Production on Vercel with Neon Postgres; a preview deployment per PR |
 
@@ -76,9 +78,9 @@ npm run dev
 - Open http://localhost:3000/register, enter your name, an email, and a password of at least 8 characters, and submit.
 - You land on `/login`; log in with the same email and password.
 
-**7. Open the demo board** at **http://localhost:3000/projects/demo** (mock data until #8):
-- Change a card's **Status** dropdown: the card moves to that column and the counts update.
-- An empty column shows **"No tasks yet"** (Done starts empty).
+**7. Open a board:** create a project at http://localhost:3000/projects and click its name. Tasks come from the tasks API (#7, #8):
+- Change a card's **Status** dropdown: the card moves to that column at once, the counts update, and the change is saved. If saving fails, the card moves back and an error appears.
+- An empty column shows **"No tasks yet"**.
 - Below 768px the columns stack vertically.
 - An unknown project, such as `/projects/other`, shows the not-found page.
 
@@ -145,7 +147,7 @@ The full rules are in [AGENTS.md](AGENTS.md).
 | `docker compose up` fails: port 5432 is already allocated | Another Postgres is running; stop it, or map another host port and update `DATABASE_URL` in `.env` |
 | `npm test`: "The table `public.User` does not exist" | The test database has no tables: run `npm run db:test:migrate` |
 | `npm test`: "Can't reach database server" | Start Postgres with `docker compose up -d --wait` |
-| `/projects/demo` sends you to `/login` | You are signed out: register at `/register`, then log in (step 6) |
+| A board (`/projects/<id>`) sends you to `/login` | You are signed out: register at `/register`, then log in (step 6) |
 
 ## HW3
 
