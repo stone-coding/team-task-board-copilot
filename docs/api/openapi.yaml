@@ -183,7 +183,7 @@ paths:
     post:
       operationId: createProject
       summary: Create a project
-      description: The caller becomes the owner; any `ownerId` in the body is ignored.
+      description: The caller becomes the owner; any `ownerId` in the body is ignored. A valid token whose user was deleted gets 401.
       requestBody:
         required: true
         content:
