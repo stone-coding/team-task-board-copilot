@@ -5,6 +5,7 @@ info:
   description: >
     All `/api/v1` endpoints except register, login, logout, and health require a session:
     the `session` cookie set by login, or `Authorization: Bearer <token>`.
+    Interactive docs: `/api/docs`; this file is served at `/api/docs/openapi.yaml`.
 servers:
   - url: /api/v1
 components:
