@@ -21,9 +21,32 @@ All times are Pacific.
 | Nov 2, 12:24 PM | Tyler | Working locally on #5 while #4 waits for approval, so he can build on a finished auth foundation. | Waiting on the #4 review. | #5 |
 | Nov 2, 1:25 PM | Haomiao | Merged #17; #4 is closed. | — | #4 |
 
-**[TO VERIFY]**
-- Two threads show only "3 replies" in the screenshots: Oct 31 at 3:47 PM (the #6 review) and Nov 1 at 1:45 PM (#4). Add anything that was decided in them.
-- Add any other Sprint 1 updates from the channel that the screenshots don't show.
+No other Sprint 1 channel updates are documented beyond these screenshots.
+
+### Review threads (collaboration evidence, not standups)
+
+These two Slack threads are replies to the Oct 31 and Nov 1 posts above. They record the review loop on PRs #16 and #17. GitHub times are given next to them.
+
+**#6, PR #16: Tyler's review, Haomiao's fixes and approval**
+
+| Slack | Who | Message | GitHub |
+|---|---|---|---|
+| Oct 31, 3:47 PM | Tyler | Reviewed the PR for #6. Two blockers: the 768px breakpoint isn't tested, and the count pill has no screen-reader context; also some minor nits. | Changes requested 3:34 PM |
+| Oct 31, 3:50 PM | Haomiao | "I will take a look and fix them now." | — |
+| Oct 31, 4:04 PM | Haomiao | Addressed the review: added 768/767px breakpoint tests (md→lg and md→sm), gave the count pill screen-reader context ("3 tasks"), took the nits, and re-requested review. | Red `712e271` 3:51 PM → fix `803ad0a` 3:52 PM; review re-requested 4:02 PM |
+| Oct 31, 4:52 PM | Tyler | "Approved" | Approved 4:15 PM; merged 4:15 PM |
+
+**#4, PR #17: Haomiao's JWT security review and Tyler's follow-up**
+
+| Slack | Who | Message | GitHub |
+|---|---|---|---|
+| Nov 1, 1:45 PM | Tyler | Implemented the #4 login journey; waiting on review. | PR #17 opened 1:36 PM; review requested 1:41 PM |
+| Nov 1, 2:31 PM | Haomiao | "I will take a look now." | — |
+| Nov 1, 3:17 PM | Haomiao | Reviewed #17: one security fix needed (an open redirect in `safeNextPath`; a tested fix was included as a suggestion), plus a README/test-database setup step. | Changes requested 3:16 PM |
+| Nov 1, 8:15 PM | Tyler | "Made the requested changes and requested your review" | Red `c02b9c5` → fix `98e2cb7`, `ac1cdec`, `5a8288a` (5:13–5:14 PM); review re-requested 5:17 PM |
+| — | Haomiao | — | Approved Nov 2, 1:23 PM; merged 1:25 PM |
+
+The Slack messages were posted after the matching GitHub events in two places (Tyler's "Approved" and "Made the requested changes"). Both times are recorded as shown.
 
 ## 2. Progress logs from GitHub
 

@@ -28,16 +28,16 @@ All times are Pacific.
 
 ### Nov 6–8
 
-- **Recorded events:**
-  - Nov 6, 8:03 AM: a Slack message posted from Tyler's account on his behalf said he was leaving the university.
-  - Nov 8: Professor Guerra approved solo continuation.
-- **[TO VERIFY]**
-  - Evidence link for the Nov 8 approval.
-  - When you informed the professor.
+- **Done:**
+  - Nov 6, 8:03 AM: a Slack message posted from Tyler's account on his behalf said he was leaving the university ([Slack](https://aicodingneusj.slack.com/archives/D0C0L550ENR/p1793981007745939)).
+  - Nov 6, 12:04 PM: emailed Professor Guerra (cc Arvind Parekh) about the change and asked to continue the project alone.
+  - Nov 8, 6:26 PM: Professor Guerra replied by email: "Yes it is ok to continue working on your own."
+- **Next:** continue Sprint 2 solo.
+- **Blockers:** waiting for the professor's reply until Nov 8.
 
 ### Nov 9–10
 
-- **[TO VERIFY]** No commits, PRs or Slack messages are recorded for these days. Add any work you can back with evidence, or leave this note.
+- **Not documented.** No commits, PRs, Slack messages or emails are recorded for these days.
 
 ### Nov 11
 
@@ -78,4 +78,14 @@ All times are Pacific.
 
 ### Nov 12–13
 
-- **[TO VERIFY]** No commits or merges are recorded. PRs #23, #27, #28 and #31 stayed open through the Nov 13 deadline. Add any review work you did on them.
+- **Not documented.** No commits, merges or reviews are recorded. PRs #23, #27, #28 and #31 stayed open through the Nov 13 deadline.
+
+### Nov 14 (after the deadline)
+
+- **Done:**
+  - Merged PR #27 (#10) at 12:12 PM, PR #28 (#11) at 12:13 PM and PR #31 (#13) at 12:13 PM. Each issue closed with its merge.
+  - `main` CI green on `07bc43d`: [run 43636387548](https://github.com/stone-coding/team-task-board-copilot/actions/runs/43636387548). The runs for the two earlier merge commits were cancelled by `cancel-in-progress`.
+  - All three production deployments READY; health check `{"status":"ok","database":"ok"}`, `/api/docs` HTTP 200.
+  - Finalized the sprint records in PR #23.
+- **Next:** triage the Dependabot PRs #32–#39; fix `cancel-in-progress`; add the new checks to branch protection.
+- **Blockers:** none recorded.

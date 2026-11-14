@@ -1,9 +1,9 @@
 # Sprint 2 — Planning
 
 **Dates:** Tue Nov 3 – Fri Nov 13, 2026.
-- The deadline was Nov 10 in AGENTS.md v5. AGENTS.md v6 (#22, merged Nov 11) records Fri Nov 13, 11:30 PM PST as both the internal deadline and the official Canvas deadline.
+- The deadline was Nov 10 in AGENTS.md v5, and Haomiao's Nov 6 email to the professor gave it as Nov 12. AGENTS.md v6 (#22, merged Nov 11) records Fri Nov 13, 11:30 PM PST as both the internal deadline and the official Canvas deadline.
 
-All times are Pacific. Items marked **[TO VERIFY]** need confirmation or evidence links.
+All times are Pacific. Sources: GitHub, the Slack direct messages between Haomiao and Tyler ([DM](https://aicodingneusj.slack.com/archives/D0C0L550ENR)), and Haomiao's Nov 6–8 email exchange with Professor Guerra. Items marked **Not documented** have no supporting evidence.
 
 ## Goal
 
@@ -13,24 +13,25 @@ No written sprint goal is recorded. The backlog map (AGENTS.md §7) and the "Spr
 - an end-to-end test of the core journey (#12);
 - complete documentation (#13).
 
-**[TO VERIFY]** Replace this with the goal you set, if you wrote one.
+**Not documented:** no separate written sprint goal exists beyond this scope.
 
 ## Product Owner / Scrum Master
 
-- **Before Nov 11:** not recorded. AGENTS.md v5 says the roles rotate each sprint. **[TO VERIFY]**
+- **Before Nov 11:** not documented. AGENTS.md v5 says the roles rotate each sprint, but no record names who held them.
 - **From Nov 11:** Haomiao Shi is both PO and Scrum Master (AGENTS.md v6 §7, PR #22).
 
 ## What happened at planning
 
 | Date | Event | Evidence |
 |---|---|---|
-| Nov 4, 1:14 PM | Haomiao asked Tyler on Slack to join Canvas group "P2 Group 5" (the professor wants pairs in a group) and said the P2 proposal was submitted. | Slack DM, Haomiao ↔ Tyler **[TO VERIFY: link]** |
+| Nov 4, 1:14 PM | Haomiao asked Tyler on Slack to join Canvas group "P2 Group 5" (the professor wants pairs in a group) and said the P2 proposal was submitted. | [Slack DM](https://aicodingneusj.slack.com/archives/D0C0L550ENR) |
 | Nov 4, 2:47 PM | Tyler posted post-merge reviews on PRs #20 and #21 (his last recorded activity in this repo). | PR #20, PR #21 comments |
 | Nov 4, 3:06 PM | Haomiao shared the Teams invite "AI Coding Project 2 – Sprint 2 Planning with Tyler". | Slack DM |
 | Nov 5, 7:02 PM | Haomiao joined the Sprint 2 planning call on Teams and messaged Tyler that he was in the meeting. | Slack DM |
 | Nov 5, 7:15 PM | Tyler did not join. Haomiao waited until 7:15 PM, then posted the proposed split below asynchronously and offered to reschedule. | Slack DM |
-| Nov 6, 8:03 AM | Tyler's Slack account posted a message written on his behalf by a family member. It said he would not continue at the university and asked Haomiao to let the professor know. | Slack DM |
-| Nov 8 | Professor Guerra approved Haomiao continuing Project 2 solo. | **[TO VERIFY: link to the approval (email, Canvas or Slack)]** |
+| Nov 6, 8:03 AM | Tyler's Slack account posted a message written on his behalf by a family member. It said he would not continue at the university and asked Haomiao to let the professor know. | [Slack message](https://aicodingneusj.slack.com/archives/D0C0L550ENR/p1793981007745939) |
+| Nov 6, 12:04 PM | Haomiao emailed Professor Guerra, cc Arvind Parekh ("CS6983 Project 2 – Urgent Team Membership Clarification"). The email reported the Slack message, noted that it could not be verified independently, and asked whether Haomiao could continue the existing project alone rather than switch groups. | Email (screenshot kept in Haomiao's HW3 evidence, not in this repo) |
+| Nov 8, 6:26 PM | Professor Guerra replied: "Yes it is ok to continue working on your own." | Email reply, same thread |
 | Nov 11, 4:18 PM | All eight Sprint 2 issues were assigned to Haomiao. Before this they had no assignee; the Nov 5 split was only proposed. AGENTS.md v6 (#22) recorded the solo arrangement. | Issue timelines; PR #22 |
 
 ## Originally proposed split (Nov 5)

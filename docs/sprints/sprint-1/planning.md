@@ -5,7 +5,7 @@ Team: Haomiao Shi (`stone-coding`) and Tyler Sarna (`tysarna`).
 
 All times are Pacific. Sources: GitHub issues, PRs and milestones, and the Slack channel
 [#kanban-board-project](https://aicodingneusj.slack.com/archives/C0CCB56S87L).
-Items marked **[TO VERIFY]** still need confirmation from the Slack history.
+Items marked **Not documented** have no evidence in GitHub or the Slack screenshots.
 
 ## Goal
 
@@ -14,9 +14,7 @@ Items marked **[TO VERIFY]** still need confirmation from the Slack history.
 
 ## Product Owner / Scrum Master
 
-AGENTS.md v4/v5 §7 says "PO and Scrum Master rotate each sprint". It does not name who held the roles in Sprint 1, and neither does GitHub or the Slack screenshots.
-
-- **[TO VERIFY]** Sprint 1 PO: ___ · Scrum Master: ___
+**Not documented.** AGENTS.md v4/v5 §7 says "PO and Scrum Master rotate each sprint", but neither it, GitHub nor the Slack screenshots name who held the roles in Sprint 1.
 
 ## Planning discussion
 
