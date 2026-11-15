@@ -1,6 +1,6 @@
 # AGENTS.md — Team Task Board
 
-<!-- Shared rules for AI assistants and humans. Maintainer: Haomiao Shi (with Tyler Sarna through Sprint 1) · v6 (§12).
+<!-- Shared rules for AI assistants and humans. Maintainer: Haomiao Shi (with Tyler Sarna through Sprint 1) · v6.1 (§12).
      Tool: Visual Studio Code + GitHub Copilot Chat (§11). Loads on every request: keep under ~200 lines and link to docs/.
      Change only through its own self-reviewed PR (§7); revisit at every retro. This file is the tiebreaker. -->
 
@@ -25,7 +25,7 @@ npx prisma validate  # from #1; run `npx prisma generate` after any schema chang
 -  **Never:** Never push directly to main, open or merge pull requests, or rewrite Git history without explicit human approval. Every PR must have the recorded self-review and green CI (§7) before merging; amend, rebase, or squash the failing-test commit (graded evidence); skip, delete, or weaken a test (`.skip`, `.only`, changed expectations); `@ts-ignore`, `@ts-expect-error`, `eslint-disable`; read, print, or commit `.env*` (except `.env.example`); edit `src/generated/`; `dangerouslySetInnerHTML`; run tests or seeds against production data.
 
 ## 1. Project and scope
-Team Task Board is a minimal Kanban app: users group work into projects and move tasks **To Do → In Progress → Done**. CS6983 pair project, continued solo by Haomiao Shi from Sprint 2 with the instructor's approval after Tyler Sarna left the course. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: Nov 3 – Nov 13, 2026: internal deadline and official Canvas deadline are both Fri Nov 13, 11:30 PM PST, for all Sprint 2 issues, tests, docs, and PRs.
+Team Task Board is a minimal Kanban app: users group work into projects and move tasks **To Do → In Progress → Done**. CS6983 pair project, continued solo by Haomiao Shi from Sprint 2 with the instructor's approval after Tyler Sarna left the course. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: Nov 3 – Nov 13, 2026: internal Sprint 2 deadline Fri Nov 13, 11:30 PM PST, for all Sprint 2 issues, tests, docs, and PRs. Official Canvas Project 2 deadline: Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST).
 - Requirements (US1–US5, acceptance criteria, data model §6): `docs/prd.md`. UI spec: `DESIGN.md` and `docs/mockups/` (`board.png` 1280px, `board-mobile.png` 375px, `board.html` if you cannot view images).
 - Work tracking: GitHub Issues + Project "Team Task Board". **The issue assignee owns the issue** and the files it creates; ownership is never set in this file.
 - Out of scope unless a tracked issue adds it: drag-and-drop, WebSockets, notifications, team invitations, multi-user sharing.
@@ -168,6 +168,7 @@ Not required, and never a reason to add dependencies without an issue:
 
 ## 12. Maintenance and changelog
 Changes go through a PR that is self-reviewed with green CI (§7). Update the PRD, OpenAPI, `DESIGN.md`, and this file together when decisions change. Personal HW3 experiments and reflections stay out of this file.
+- **v6.1 (2026-11-14, #23):** deadline correction. Nov 13, 11:30 PM PST is only the internal Sprint 2 deadline; the official Canvas Project 2 deadline is Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST). The v6 entry below is kept as written.
 - **v6 (2026-11-11, solo):** Tyler Sarna left the course; with the instructor's approval Haomiao Shi finishes Sprint 2 alone. Partner review is replaced by a recorded self-review plus green CI; PO/SM no longer rotate; Sprint 2 internal and Canvas deadlines both Fri Nov 13, 2026, 11:30 PM PST.
 - **v5 (2026-11-03, #3):** hosted database is Neon (resolves the Supabase/Neon conflict); migrations run during each Vercel build instead of a manual production step.
 - **v4 (2026-10-28, shared):** merged Tyler's v3 and Haomiao's v2. Added environment isolation and the Supabase plan (Neon conflict flagged), test locations including `tests/integration/`, assignee ownership, templates, seed, health check, OpenAPI, architecture docs, async standups, CI/CD and Vercel rules, and optional MCP/browser/pre-commit practices.

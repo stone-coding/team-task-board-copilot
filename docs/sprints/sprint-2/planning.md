@@ -1,7 +1,7 @@
 # Sprint 2 — Planning
 
 **Dates:** Tue Nov 3 – Fri Nov 13, 2026.
-- The deadline was Nov 10 in AGENTS.md v5, and Haomiao's Nov 6 email to the professor gave it as Nov 12. AGENTS.md v6 (#22, merged Nov 11) set Fri Nov 13, 11:30 PM PST as the internal Sprint 2 deadline. v6 also listed Nov 13 as the Canvas deadline, but the official Canvas Project 2 deadline is Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST).
+- The deadline was Nov 10 in AGENTS.md v5, and Haomiao's Nov 6 email to the professor gave it as Nov 12. AGENTS.md v6 (#22, merged Nov 11) set Fri Nov 13, 11:30 PM PST as the internal Sprint 2 deadline. v6 also listed Nov 13 as the Canvas deadline (corrected in AGENTS.md v6.1, PR #23), but the official Canvas Project 2 deadline is Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST).
 
 All times are Pacific. Sources: GitHub, the Slack direct messages between Haomiao and Tyler ([DM](https://aicodingneusj.slack.com/archives/D0C0L550ENR)), and Haomiao's Nov 6–8 email exchange with Professor Guerra. Items marked **Not documented** have no supporting evidence.
 
