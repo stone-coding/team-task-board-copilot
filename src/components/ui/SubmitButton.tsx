@@ -1,3 +1,5 @@
+import { PRIMARY_BUTTON } from "@/components/ui/button-styles";
+
 type SubmitButtonProps = {
   label: string;
   pending: boolean;
@@ -5,11 +7,13 @@ type SubmitButtonProps = {
 
 export function SubmitButton({ label, pending }: SubmitButtonProps) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-md bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-    >
+    <button type="submit" disabled={pending} className={PRIMARY_BUTTON}>
+      {pending ? (
+        <span
+          aria-hidden="true"
+          className="size-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white motion-reduce:animate-none"
+        />
+      ) : null}
       {label}
     </button>
   );

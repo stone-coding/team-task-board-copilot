@@ -35,9 +35,9 @@ export function TaskDeleteConfirm({ task, onDeleted, onCancel }: TaskDeleteConfi
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-2">
+    <div className="mt-3 flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-zinc-900">Delete this task?</p>
+        <p className="w-full text-sm text-zinc-900">Delete this task?</p>
         <button type="button" onClick={handleConfirm} disabled={pending} aria-label={`Confirm delete ${task.title}`} className={DANGER_BUTTON}>
           Confirm delete
         </button>

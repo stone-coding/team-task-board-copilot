@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { TEXT_LINK } from "@/components/ui/button-styles";
 import { FormError } from "@/components/ui/FormError";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { TextField } from "@/components/ui/TextField";
@@ -49,7 +50,7 @@ export function RegisterForm() {
       <SubmitButton label="Create account" pending={pending} />
       <p className="text-sm text-zinc-600">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-blue-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+        <Link href="/login" className={TEXT_LINK}>
           Log in
         </Link>
       </p>

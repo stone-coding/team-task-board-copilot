@@ -11,25 +11,29 @@ type BoardColumnProps = {
   onTaskDeleted: (taskId: string) => void;
 };
 
-const ACCENT_CLASSES: Record<TaskStatus, string> = {
-  TODO: "border-t-slate-500",
-  IN_PROGRESS: "border-t-blue-600",
-  DONE: "border-t-green-600",
+const ACCENT_CLASSES: Record<TaskStatus, { border: string; dot: string }> = {
+  TODO: { border: "border-t-slate-500", dot: "bg-slate-500" },
+  IN_PROGRESS: { border: "border-t-blue-600", dot: "bg-blue-600" },
+  DONE: { border: "border-t-green-600", dot: "bg-green-600" },
 };
 
 export function BoardColumn({ status, tasks, onStatusChange, onTaskSaved, onTaskDeleted }: BoardColumnProps) {
   const headingId = useId();
+  const accent = ACCENT_CLASSES[status];
 
   return (
     <section
       aria-labelledby={headingId}
-      className={`rounded-xl border border-t-4 border-zinc-200 bg-zinc-50 p-3 ${ACCENT_CLASSES[status]}`}
+      className={`flex flex-col rounded-xl border border-t-4 border-zinc-200 bg-zinc-100/80 p-3 ${accent.border}`}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <h2 id={headingId} className="text-base font-semibold">
-          {STATUS_LABELS[status]}
-        </h2>
-        <span className="rounded-full bg-zinc-200 px-2 text-xs font-semibold text-zinc-600">
+      <div className="mb-3 flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span aria-hidden="true" className={`size-2 rounded-full ${accent.dot}`} />
+          <h2 id={headingId} className="text-sm font-semibold text-zinc-900">
+            {STATUS_LABELS[status]}
+          </h2>
+        </div>
+        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-zinc-600 tabular-nums ring-1 ring-zinc-200">
           {tasks.length}
           <span className="sr-only">{tasks.length === 1 ? " task" : " tasks"}</span>
         </span>
@@ -41,8 +45,8 @@ export function BoardColumn({ status, tasks, onStatusChange, onTaskSaved, onTask
           ))}
         </ul>
       ) : (
-        <div className="rounded-lg border border-dashed border-zinc-400 py-5 text-center text-sm text-zinc-600">
-          No tasks yet
+        <div className="rounded-lg border border-dashed border-zinc-400 px-3 py-6 text-center">
+          <p className="text-sm text-zinc-600">No tasks yet</p>
         </div>
       )}
     </section>
