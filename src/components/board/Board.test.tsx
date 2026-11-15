@@ -294,3 +294,92 @@ describe("Board", () => {
     expect(screen.queryByRole("heading", { name: "Review sprint backlog" })).not.toBeInTheDocument();
   });
 });
+
+describe("Board: search and filter", () => {
+  beforeEach(() => vi.stubGlobal("fetch", saveSucceeds()));
+  afterEach(() => vi.unstubAllGlobals());
+
+  function search() {
+    return screen.getByRole("searchbox", { name: "Search tasks" });
+  }
+
+  function statusFilter() {
+    return screen.getByRole("combobox", { name: "Filter by status" });
+  }
+
+  it("narrows the board to tasks whose title matches the search", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(search(), "release");
+
+    expect(within(column("To Do")).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(column("To Do")).getByRole("heading", { name: "Write release notes" })).toBeInTheDocument();
+    expect(within(column("In Progress")).getByText("No matching tasks")).toBeInTheDocument();
+    expect(count("To Do", 1)).toHaveTextContent(/^1 task$/);
+    expect(screen.getByRole("status")).toHaveTextContent("Showing 1 of 5 tasks");
+  });
+
+  it("matches a task by its description", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(search(), "TEAMMATES");
+
+    expect(screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Draft onboarding checklist",
+    ]);
+  });
+
+  it("shows only the selected status", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.selectOptions(statusFilter(), "In Progress");
+
+    expect(within(column("In Progress")).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(column("To Do")).getByText("No matching tasks")).toBeInTheDocument();
+    expect(within(column("Done")).getByText("No matching tasks")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Showing 2 of 5 tasks");
+  });
+
+  it("restores every task and the empty-state text after Clear filters", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(search(), "release");
+    await user.selectOptions(statusFilter(), "To Do");
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    expect(statusFilter()).toHaveValue("ALL");
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(5);
+    expect(within(column("Done")).getByText("No tasks yet")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear filters" })).toBeDisabled();
+  });
+
+  it("keeps the project overview counting all tasks while filtered", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(search(), "release");
+
+    expect(overviewStat("Total tasks")).toHaveTextContent(/^5$/);
+    expect(overviewStat("In progress")).toHaveTextContent(/^2$/);
+  });
+
+  it("saves a status change made while filtered and hides the card that no longer matches", async () => {
+    const fetchMock = saveSucceeds();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.selectOptions(statusFilter(), "To Do");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Write release notes" }), "Done");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks/t3", expect.objectContaining({ method: "PATCH" }));
+    expect(screen.queryByRole("heading", { name: "Write release notes" })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Showing 2 of 5 tasks");
+    await waitFor(() => expect(overviewStat("Completed")).toHaveTextContent(/^1$/));
+  });
+});
