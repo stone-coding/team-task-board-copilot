@@ -13,9 +13,10 @@ A minimal Kanban task board. Users sign up, group work into projects, and move t
 ## Features
 
 - **Accounts** (#4): register and log in; the session is a JWT in an httpOnly cookie (Bearer tokens also work for API clients). Every page except `/login` and `/register` requires a session.
-- **Projects** (#5): create and delete your own projects (deleting asks for confirmation and removes its tasks). Other users' projects are invisible (404).
+- **Projects** (#5): create projects and delete the ones you own (deleting asks for confirmation and removes its tasks). Projects you are not a member of are invisible (404).
 - **Board** (#6, #8): three columns with counts and an empty state; change a task's status from its dropdown. The card moves at once and is saved through the API; if saving fails, it moves back and an error is shown.
 - **Project overview** (#40): above the board, cards show total tasks, in progress, completed, and the completion rate, with a progress bar. They are derived from the board's tasks and update as soon as a card moves.
+- **Shared projects and roles** (#49): the owner adds teammates by the email of their existing account; the project appears in everyone's list ("Shared with you"). Owners and members both work on tasks; only the owner deletes the project or manages members, and members can leave. Anyone else gets 404, even with a direct link. Removing a member revokes access immediately; collaboration is refresh-based.
 - **Priority** (#47): every task is Low, Medium, or High priority (Medium by default), shown as a text badge on its card; each column lists High first, then Medium, then Low. Set it when adding a task or edit it later.
 - **Search and filter** (#45): a search box matches task titles and descriptions, status and priority filters narrow the columns, and Clear filters resets all three; a live message shows how many tasks match. Filtering happens in the browser, so the overview still counts every task.
 - **Tasks** (#7, #9): add a task (title required, description optional), edit its title and description, and delete it after confirming.
