@@ -68,6 +68,7 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 User    (id, email unique, name, passwordHash, createdAt)
 Project (id, name, ownerId → User, createdAt)                 on delete cascade
 Task    (id, projectId → Project, title, description?, status TODO|IN_PROGRESS|DONE,
+         priority LOW|MEDIUM|HIGH default MEDIUM (#47),
          createdAt, updatedAt)                                  index (projectId, status)
 ```
 
