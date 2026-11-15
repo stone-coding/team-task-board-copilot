@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateTaskSchema } from "@/lib/task-schemas";
 import { getAuthenticatedUserId } from "@/server/auth/session";
-import { notFoundError, readJson, unauthenticated, validationError, withErrorHandling } from "@/server/http";
-import { deleteTask, updateTask } from "@/server/services/tasks";
+import { jsonError, notFoundError, readJson, unauthenticated, validationError, withErrorHandling } from "@/server/http";
+import { deleteTask, InvalidAssigneeError, updateTask } from "@/server/services/tasks";
 
 type Context = RouteContext<"/api/v1/tasks/[taskId]">;
 
@@ -20,7 +20,15 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context: Con
   }
 
   const { taskId } = await context.params;
-  const task = await updateTask(userId, taskId, parsed.data);
+  let task;
+  try {
+    task = await updateTask(userId, taskId, parsed.data);
+  } catch (error) {
+    if (error instanceof InvalidAssigneeError) {
+      return jsonError(400, "VALIDATION_ERROR", error.message);
+    }
+    throw error;
+  }
   if (!task) {
     return notFoundError(TASK_NOT_FOUND);
   }

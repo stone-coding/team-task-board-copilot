@@ -73,6 +73,10 @@ export async function removeMember(actorId: string, projectId: string, targetUse
   if (target === "OWNER") {
     return "owner";
   }
-  await prisma.projectMember.delete({ where: { projectId_userId: { projectId, userId: targetUserId } } });
+  // Their tasks in this project become unassigned in the same transaction, so no task points at a nonmember.
+  await prisma.$transaction([
+    prisma.task.updateMany({ where: { projectId, assigneeId: targetUserId }, data: { assigneeId: null } }),
+    prisma.projectMember.delete({ where: { projectId_userId: { projectId, userId: targetUserId } } }),
+  ]);
   return "removed";
 }

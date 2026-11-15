@@ -4,6 +4,7 @@ import { TaskDeleteConfirm } from "@/components/board/TaskDeleteConfirm";
 import { TaskEditForm } from "@/components/board/TaskEditForm";
 import { FOCUS_RING, GHOST_BUTTON } from "@/components/ui/button-styles";
 import { STATUS_LABELS, TASK_STATUSES, isTaskStatus } from "@/lib/task-status";
+import type { ProjectMemberInfo } from "@/lib/projects";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
 type TaskCardProps = {
@@ -11,13 +12,14 @@ type TaskCardProps = {
   onStatusChange: (taskId: string, status: TaskStatus) => void;
   onSaved: (task: Task) => void;
   onDeleted: (taskId: string) => void;
+  members?: ProjectMemberInfo[];
 };
 
 type Mode = "view" | "editing" | "confirmingDelete";
 
 const CARD = "rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md";
 
-export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardProps) {
+export function TaskCard({ task, onStatusChange, onSaved, onDeleted, members }: TaskCardProps) {
   const [mode, setMode] = useState<Mode>("view");
   const editRef = useRef<HTMLButtonElement>(null);
   const deleteRef = useRef<HTMLButtonElement>(null);
@@ -48,6 +50,7 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardP
       <li className={CARD}>
         <TaskEditForm
           task={task}
+          members={members}
           onSaved={(saved) => {
             onSaved(saved);
             backToView("edit");
@@ -65,6 +68,15 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardP
         <PriorityBadge priority={task.priority} />
       </div>
       {task.description ? <p className="mt-1 text-sm leading-relaxed break-words text-zinc-600">{task.description}</p> : null}
+      <div className="mt-2 flex items-center gap-1.5 text-xs text-zinc-600">
+        <span
+          aria-hidden="true"
+          className={`grid size-5 place-items-center rounded-full text-[10px] font-semibold ${task.assignee ? "bg-blue-50 text-blue-800" : "border border-dashed border-zinc-400"}`}
+        >
+          {task.assignee ? task.assignee.name.trim().charAt(0).toUpperCase() : null}
+        </span>
+        {task.assignee ? `Assigned to ${task.assignee.name}` : "Unassigned"}
+      </div>
       {mode === "confirmingDelete" ? (
         <TaskDeleteConfirm task={task} onDeleted={onDeleted} onCancel={() => backToView("delete")} />
       ) : (

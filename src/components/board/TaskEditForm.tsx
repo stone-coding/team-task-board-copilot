@@ -4,15 +4,17 @@ import { SECONDARY_BUTTON } from "@/components/ui/button-styles";
 import { FormError } from "@/components/ui/FormError";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
+import type { ProjectMemberInfo } from "@/lib/projects";
 import type { Task } from "@/lib/tasks";
 
 type TaskEditFormProps = {
   task: Task;
   onSaved: (task: Task) => void;
   onCancel: () => void;
+  members?: ProjectMemberInfo[];
 };
 
-export function TaskEditForm({ task, onSaved, onCancel }: TaskEditFormProps) {
+export function TaskEditForm({ task, onSaved, onCancel, members }: TaskEditFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,7 +56,13 @@ export function TaskEditForm({ task, onSaved, onCancel }: TaskEditFormProps) {
   return (
     <form ref={formRef} aria-label={`Edit ${task.title}`} noValidate onSubmit={handleSubmit} className="flex flex-col gap-3">
       <FormError message={error} />
-      <TaskFields defaultTitle={task.title} defaultDescription={task.description} defaultPriority={task.priority} />
+      <TaskFields
+        defaultTitle={task.title}
+        defaultDescription={task.description}
+        defaultPriority={task.priority}
+        defaultAssigneeId={task.assignee?.userId}
+        members={members}
+      />
       <div className="flex gap-2">
         <SubmitButton label="Save" pending={pending} />
         <button type="button" onClick={onCancel} disabled={pending} className={SECONDARY_BUTTON}>

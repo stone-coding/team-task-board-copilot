@@ -58,6 +58,13 @@ components:
         description: { type: string, maxLength: 2000, description: Omitted when the task has no description }
         status: { $ref: "#/components/schemas/TaskStatus" }
         priority: { $ref: "#/components/schemas/TaskPriority" }
+        assignee:
+          type: object
+          description: Omitted when the task is unassigned
+          required: [userId, name]
+          properties:
+            userId: { type: string }
+            name: { type: string }
     TaskResponse:
       type: object
       required: [task]
@@ -362,6 +369,10 @@ paths:
                 priority:
                   $ref: "#/components/schemas/TaskPriority"
                   description: Optional; defaults to MEDIUM
+                assigneeId:
+                  type: [string, "null"]
+                  minLength: 1
+                  description: Optional user id of a current project member; null or omitted leaves the task unassigned (400 if not a member)
       responses:
         "201":
           description: Task created.
@@ -376,7 +387,7 @@ paths:
     patch:
       operationId: updateTask
       summary: Update a task
-      description: Change the title, description, status, or priority. Send at least one field; omitted fields stay unchanged.
+      description: Change the title, description, status, priority, or assignee. Send at least one field; omitted fields stay unchanged.
       requestBody:
         required: true
         content:
@@ -392,6 +403,10 @@ paths:
                   description: Blank or null removes the description
                 status: { $ref: "#/components/schemas/TaskStatus" }
                 priority: { $ref: "#/components/schemas/TaskPriority" }
+                assigneeId:
+                  type: [string, "null"]
+                  minLength: 1
+                  description: User id of a current project member, or null to unassign (400 if not a member)
       responses:
         "200":
           description: The updated task.
