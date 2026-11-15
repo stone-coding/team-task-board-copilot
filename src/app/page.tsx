@@ -11,9 +11,6 @@ export default function Home() {
       <Link className="font-medium text-blue-700 underline dark:text-blue-400" href="/projects">
         Your projects
       </Link>
-      <Link className="font-medium text-blue-700 underline dark:text-blue-400" href="/projects/demo">
-        Open the demo board
-      </Link>
       <LogoutButton />
     </main>
   );

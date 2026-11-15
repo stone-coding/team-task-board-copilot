@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import type { CreateProjectInput } from "@/lib/project-schemas";
 import type { Project } from "@/lib/projects";
 import { prisma } from "@/server/db";
@@ -21,8 +22,22 @@ export async function listProjects(ownerId: string): Promise<Project[]> {
   return rows.map(toProject);
 }
 
+/** The token was valid but its user no longer exists, so the owner foreign key rejected the insert. */
+export class OwnerNotFoundError extends Error {
+  constructor() {
+    super("The project owner no longer exists");
+  }
+}
+
 export async function createProject(ownerId: string, input: CreateProjectInput): Promise<Project> {
-  return toProject(await prisma.project.create({ data: { ownerId, name: input.name }, select: PROJECT_SELECT }));
+  try {
+    return toProject(await prisma.project.create({ data: { ownerId, name: input.name }, select: PROJECT_SELECT }));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
+      throw new OwnerNotFoundError();
+    }
+    throw error;
+  }
 }
 
 export async function findProject(ownerId: string, projectId: string): Promise<Project | null> {

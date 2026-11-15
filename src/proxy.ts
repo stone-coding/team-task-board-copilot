@@ -9,6 +9,8 @@ const PUBLIC_PATHS = new Set([
   "/api/v1/auth/register",
   "/api/v1/auth/logout",
   "/api/v1/health",
+  "/api/docs",
+  "/api/docs/openapi.yaml",
 ]);
 
 // Optimistic check only: route handlers verify the session again before touching data.

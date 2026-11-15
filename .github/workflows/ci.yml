@@ -17,6 +17,18 @@ env:
   JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else
 
 jobs:
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Reads package-lock.json; fails on high or critical advisories (moderate and low are reported only).
+      - run: npm audit --audit-level=high
+
   checks:
     name: Lint and typecheck
     runs-on: ubuntu-latest

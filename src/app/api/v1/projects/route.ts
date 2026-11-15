@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createProjectSchema } from "@/lib/project-schemas";
 import { getAuthenticatedUserId } from "@/server/auth/session";
 import { readJson, unauthenticated, validationError, withErrorHandling } from "@/server/http";
-import { createProject, listProjects } from "@/server/services/projects";
+import { createProject, listProjects, OwnerNotFoundError } from "@/server/services/projects";
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const userId = await getAuthenticatedUserId(request);
@@ -22,5 +22,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   if (!parsed.success) {
     return validationError(parsed.error);
   }
-  return NextResponse.json({ project: await createProject(userId, parsed.data) }, { status: 201 });
+  try {
+    return NextResponse.json({ project: await createProject(userId, parsed.data) }, { status: 201 });
+  } catch (error) {
+    if (error instanceof OwnerNotFoundError) {
+      return unauthenticated();
+    }
+    throw error;
+  }
 });

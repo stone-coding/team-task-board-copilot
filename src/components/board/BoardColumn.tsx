@@ -7,6 +7,8 @@ type BoardColumnProps = {
   status: TaskStatus;
   tasks: Task[];
   onStatusChange: (taskId: string, status: TaskStatus) => void;
+  onTaskSaved: (task: Task) => void;
+  onTaskDeleted: (taskId: string) => void;
 };
 
 const ACCENT_CLASSES: Record<TaskStatus, string> = {
@@ -15,7 +17,7 @@ const ACCENT_CLASSES: Record<TaskStatus, string> = {
   DONE: "border-t-green-600",
 };
 
-export function BoardColumn({ status, tasks, onStatusChange }: BoardColumnProps) {
+export function BoardColumn({ status, tasks, onStatusChange, onTaskSaved, onTaskDeleted }: BoardColumnProps) {
   const headingId = useId();
 
   return (
@@ -35,7 +37,7 @@ export function BoardColumn({ status, tasks, onStatusChange }: BoardColumnProps)
       {tasks.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} />
+            <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onSaved={onTaskSaved} onDeleted={onTaskDeleted} />
           ))}
         </ul>
       ) : (

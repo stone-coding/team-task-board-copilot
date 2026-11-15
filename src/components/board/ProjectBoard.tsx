@@ -1,6 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { Board } from "@/components/board/Board";
-import { mockProject, mockTasks } from "@/lib/mock-tasks";
+import { getCurrentUserId } from "@/server/auth/current-user";
+import { findProject } from "@/server/services/projects";
+import { listTasks } from "@/server/services/tasks";
 
 type ProjectBoardProps = {
   params: Promise<{ projectId: string }>;
@@ -8,22 +11,32 @@ type ProjectBoardProps = {
 
 export async function ProjectBoard({ params }: ProjectBoardProps) {
   const { projectId } = await params;
-  // TODO(#8): replace mock data with the tasks API.
-  if (projectId !== mockProject.id) {
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    redirect(`/login?next=${encodeURIComponent(`/projects/${projectId}`)}`);
+  }
+
+  // Same owner-scoped services as the API: another user's project is not found.
+  const [project, tasks] = await Promise.all([findProject(userId, projectId), listTasks(userId, projectId)]);
+  if (!project || !tasks) {
     notFound();
   }
-  const projectTasks = mockTasks.filter((task) => task.projectId === projectId);
 
   return (
     <>
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4">
-          <p className="text-sm text-zinc-600">Projects / {mockProject.name}</p>
-          <h1 className="mt-1 text-2xl font-semibold">{mockProject.name}</h1>
+          <p className="text-sm text-zinc-600">
+            <Link href="/projects" className="underline hover:text-zinc-900">
+              Projects
+            </Link>{" "}
+            / {project.name}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold">{project.name}</h1>
         </div>
       </header>
       <main className="mx-auto w-full max-w-7xl p-4">
-        <Board initialTasks={projectTasks} />
+        <Board key={project.id} projectId={project.id} initialTasks={tasks} />
       </main>
     </>
   );

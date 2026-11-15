@@ -89,6 +89,17 @@ describe("projects API", () => {
       const body = await response.json();
       expect(body.projects.map((project: { name: string }) => project.name)).toEqual(["Cookie project"]);
     });
+
+    it("rejects creating a project with a valid token for a deleted user with 401 and creates nothing", async () => {
+      await prisma.user.delete({ where: { id: ada.userId } });
+
+      const response = await createProject(ada, { name: "Orphan" });
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual({
+        error: { code: "UNAUTHENTICATED", message: "Authentication required" },
+      });
+      await expect(prisma.project.count({ where: { name: "Orphan" } })).resolves.toBe(0);
+    });
   });
 
   describe("POST /api/v1/projects", () => {
