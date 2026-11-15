@@ -49,6 +49,7 @@ Calm, utilitarian Kanban. Content first: the only color on the page is the colum
 | Component | Spec |
 |---|---|
 | `BoardColumn` | `<section aria-labelledby>`; `bg-zinc-50 border border-zinc-200 rounded-xl p-3 border-t-4` plus the status color. `<h2>` title on the left, count pill on the right. Cards in `<ul>`/`<li>` with `gap-2`. |
+| `ProjectOverview` | Above the add-task form: `role="group"` named "Project overview"; a `<dl>` of four stat cards (`bg-white border border-zinc-200 rounded-lg px-4 py-3`; label `text-xs text-zinc-600`, value `text-2xl font-semibold tabular-nums`) in `grid-cols-2 sm:grid-cols-4`; then a native `<progress>` (`h-2 rounded-full`, track `bg-zinc-200`, fill `bg-green-600`) named "Completion rate" with an "X of Y tasks completed" caption. |
 | Count pill | `rounded-full bg-zinc-200 px-2 text-xs font-semibold text-zinc-600`. |
 | Empty state | Dashed box (`border border-dashed border-zinc-400 rounded-lg py-5 text-center text-zinc-600`) with **"No tasks yet"**. |
 | `TaskCard` | `bg-white border border-zinc-200 rounded-lg px-3 py-2.5`. `<h3>` title; optional description `text-zinc-600`. Below: visible "Status" text (`aria-hidden`) and a native `<select>` (`border-zinc-400 rounded-md`) with `aria-label="Status for {title}"`. |

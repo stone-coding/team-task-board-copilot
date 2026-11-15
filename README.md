@@ -15,6 +15,7 @@ A minimal Kanban task board. Users sign up, group work into projects, and move t
 - **Accounts** (#4): register and log in; the session is a JWT in an httpOnly cookie (Bearer tokens also work for API clients). Every page except `/login` and `/register` requires a session.
 - **Projects** (#5): create and delete your own projects (deleting asks for confirmation and removes its tasks). Other users' projects are invisible (404).
 - **Board** (#6, #8): three columns with counts and an empty state; change a task's status from its dropdown. The card moves at once and is saved through the API; if saving fails, it moves back and an error is shown.
+- **Project overview** (#40): above the board, cards show total tasks, in progress, completed, and the completion rate, with a progress bar. They are derived from the board's tasks and update as soon as a card moves.
 - **Tasks** (#7, #9): add a task (title required, description optional), edit its title and description, and delete it after confirming.
 - **REST API** (#7, #11, US5): every `/api/v1` endpoint is described in [docs/api/openapi.yaml](docs/api/openapi.yaml) and browsable with Swagger UI at `/api/docs`. Errors use `{ "error": { "code", "message" } }`.
 - **Accessible and responsive**: native controls with labels, visible focus, announced errors; columns side by side from 768px and stacked below, with no horizontal scroll at 375px.
