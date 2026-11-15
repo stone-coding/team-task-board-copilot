@@ -28,7 +28,7 @@ This is a solo retrospective by Haomiao Shi. No retrospective meeting was held, 
 - **Losing the partner was absorbed late.**
   - Nov 5 planning had no confirmation, and Tyler left on Nov 6.
   - No Sprint 2 code was written until Nov 11, three days after the Nov 8 approval.
-  - That left two days before the deadline. PRs #27, #28 and #31 (5 points) were not merged by Nov 13; they were merged on Nov 14.
+  - That left two days before the internal deadline. PRs #27, #28 and #31 (5 points) were not merged by Nov 13; they were merged on Nov 14, before the Canvas deadline of Nov 15.
 - **Self-review is weaker than partner review.**
   - In Sprint 1, partner reviews found real bugs (an open redirect, an untested breakpoint).
   - In Sprint 2, PRs #22 and #24 merged 13 and 8 minutes after they were opened.
@@ -43,7 +43,7 @@ Status checked Nov 14.
 
 | Action | Owner | Status |
 |---|---|---|
-| Merge or close PRs #27, #28 and #31 | Haomiao | Done. Merged Nov 14, 12:12–12:13 PM, after the deadline. |
+| Merge or close PRs #27, #28 and #31 | Haomiao | Done. Merged Nov 14, 12:12–12:13 PM: after the internal deadline, before the Canvas deadline. |
 | Set `cancel-in-progress` to apply only to `pull_request` events | Haomiao | Not done. It recurred on Nov 14. |
 | Add "Dependency audit" and CodeQL to `main`'s required checks | Haomiao | Not done. #27 is merged, but the required checks are still Lint and typecheck, Unit and integration tests, and Build and E2E. |
 | Triage the Dependabot PRs #32–#39 | Haomiao | Not done |

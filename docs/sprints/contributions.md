@@ -28,10 +28,10 @@ Tyler attended no Sprint 2 meeting and made no Sprint 2 commits, PRs or reviews.
 | #8 Board ↔ tasks API | 3 | #26 | Haomiao | Nov 11 |
 | #9 Task create/edit/delete UI | 2 | #29 | Haomiao | Nov 11 |
 | #12 Core journey E2E | 2 | #30 | Haomiao | Nov 11 |
-| #10 Security scanning | 1 | #27 | Haomiao | **Nov 14** (after the deadline) |
-| #11 OpenAPI docs | 2 | #28 | Haomiao | **Nov 14** (after the deadline) |
-| #13 README and diagrams | 2 | #31 | Haomiao | **Nov 14** (after the deadline) |
+| #10 Security scanning | 1 | #27 | Haomiao | **Nov 14** (after the internal deadline) |
+| #11 OpenAPI docs | 2 | #28 | Haomiao | **Nov 14** (after the internal deadline) |
+| #13 README and diagrams | 2 | #31 | Haomiao | **Nov 14** (after the internal deadline) |
 | Process: AGENTS.md v6 | — | #22 | Haomiao | Nov 11 |
 | Sprint records (this folder) | — | #23 | Haomiao | Open |
 
-**Sprint 2 total:** 16 of 16 points by Haomiao. 11 were merged by the Nov 13 deadline and 5 on Nov 14. Every Sprint 2 PR was self-reviewed under AGENTS.md v6; none had a partner review.
+**Sprint 2 total:** 16 of 16 points by Haomiao. 11 were merged by the Nov 13 internal deadline and 5 on Nov 14, before the official Canvas deadline (Nov 15, 11:59 PM PST). Every Sprint 2 PR was self-reviewed under AGENTS.md v6; none had a partner review.

@@ -78,9 +78,9 @@ All times are Pacific.
 
 ### Nov 12–13
 
-- **Not documented.** No commits, merges or reviews are recorded. PRs #23, #27, #28 and #31 stayed open through the Nov 13 deadline.
+- **Not documented.** No commits, merges or reviews are recorded. PRs #23, #27, #28 and #31 stayed open through the Nov 13 internal deadline.
 
-### Nov 14 (after the deadline)
+### Nov 14 (after the internal deadline)
 
 - **Done:**
   - Merged PR #27 (#10) at 12:12 PM, PR #28 (#11) at 12:13 PM and PR #31 (#13) at 12:13 PM. Each issue closed with its merge.
