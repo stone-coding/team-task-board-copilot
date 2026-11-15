@@ -44,9 +44,10 @@ A minimal Kanban task board. Users sign up, group work into projects, and move t
 | Sprint 1 notes | [planning](docs/sprints/sprint-1/planning.md) · [standups](docs/sprints/sprint-1/standups.md) · [review](docs/sprints/sprint-1/review.md) · [retrospective](docs/sprints/sprint-1/retro.md) |
 | Sprint 2 notes | [planning](docs/sprints/sprint-2/planning.md) · [standups](docs/sprints/sprint-2/standups.md) · [review](docs/sprints/sprint-2/review.md) · [retrospective](docs/sprints/sprint-2/retro.md) |
 | Shared rules for humans and AI | [AGENTS.md](AGENTS.md) |
+| AI-assisted development workflow | [docs/ai-workflow.md](docs/ai-workflow.md) |
 | Scrum board | [GitHub Project](https://github.com/users/stone-coding/projects/3/views/2) · [Milestones](https://github.com/stone-coding/team-task-board-copilot/milestones) · [Issues](https://github.com/stone-coding/team-task-board-copilot/issues) |
 
-Development uses Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.md`.
+Development used Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.md`, and Claude Code for the final documentation and UI polish; see [docs/ai-workflow.md](docs/ai-workflow.md).
 
 ## Prerequisites
 
