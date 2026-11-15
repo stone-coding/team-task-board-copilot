@@ -72,6 +72,7 @@ erDiagram
   Project ||--o{ Task : contains
   Project ||--o{ ProjectMember : "has members"
   User ||--o{ ProjectMember : "belongs to"
+  User |o--o{ Task : "is assigned"
 
   User {
     String id PK "cuid"
@@ -99,6 +100,7 @@ erDiagram
     String description "nullable"
     TaskStatus status "TODO | IN_PROGRESS | DONE, default TODO"
     TaskPriority priority "LOW | MEDIUM | HIGH, default MEDIUM"
+    String assigneeId FK "nullable, a project member; on delete set null"
     DateTime createdAt
     DateTime updatedAt
   }

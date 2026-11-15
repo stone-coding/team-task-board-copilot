@@ -56,6 +56,12 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 - [x] A user who is not a member gets 404 for the project, its tasks, and its members, even with a direct link or id.
 - [x] Removing a member revokes access on the next request; a member can leave a project; the owner cannot be removed.
 
+**US7. Task assignment** (added after Sprint 2, #51)
+- [x] Any member can assign a task to a current member of the project, or leave it unassigned; each card shows its assignee.
+- [x] Assigning someone who is not a member of the project is rejected (400) and changes nothing.
+- [x] The board can be filtered by assignee (including "Unassigned"), combined with search, status, and priority.
+- [x] When a member is removed or leaves, their tasks in that project become unassigned.
+
 ## 4. Design reference
 
 - Mockup: [`docs/mockups/board.png`](mockups/board.png) (1280px) and [`docs/mockups/board-mobile.png`](mockups/board-mobile.png) (375px). The source is [`docs/mockups/board.html`](mockups/board.html).
@@ -64,7 +70,7 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 
 ## 5. MVP scope
 
-**In scope:** US1–US5, plus US6 (shared projects and roles), added after Sprint 2.
+**In scope:** US1–US5, plus US6 (shared projects and roles) and US7 (task assignment), added after Sprint 2.
 
 **Explicitly out of scope:** drag-and-drop, real-time sync or WebSockets (collaboration is refresh-based), notifications, email invitations (members are added by the email of an existing account), due dates, file attachments, OAuth providers, mobile apps.
 
@@ -78,7 +84,8 @@ ProjectMember (projectId → Project, userId → User, role OWNER|MEMBER default
         access to a project and its tasks comes only from this table
 Task    (id, projectId → Project, title, description?, status TODO|IN_PROGRESS|DONE,
          priority LOW|MEDIUM|HIGH default MEDIUM (#47),
-         createdAt, updatedAt)                                  index (projectId, status)
+         assigneeId? → User on delete set null (#51),
+         createdAt, updatedAt)                                  index (projectId, status), (projectId, assigneeId)
 ```
 
 ## 7. Architecture
