@@ -6,7 +6,7 @@ import { ProjectListItem } from "@/components/projects/ProjectListItem";
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
-const PROJECT = { id: "p1", name: "Roadmap", createdAt: "2026-10-01T00:00:00.000Z" };
+const PROJECT = { id: "p1", name: "Roadmap", createdAt: "2026-10-01T00:00:00.000Z", role: "OWNER" as const };
 
 function renderItem() {
   render(
@@ -20,6 +20,18 @@ function renderItem() {
 describe("ProjectListItem", () => {
   beforeEach(() => refresh.mockReset());
   afterEach(() => vi.unstubAllGlobals());
+
+  it("shows a shared project with a badge and no Delete button for a member", () => {
+    render(
+      <ul>
+        <ProjectListItem project={{ ...PROJECT, role: "MEMBER" }} />
+      </ul>,
+    );
+
+    expect(screen.getByText("Shared with you")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Roadmap" })).toHaveAttribute("href", "/projects/p1");
+    expect(screen.queryByRole("button", { name: "Delete Roadmap" })).not.toBeInTheDocument();
+  });
 
   it("asks for confirmation before deleting and moves focus to Cancel", async () => {
     const fetchMock = vi.fn();

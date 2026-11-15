@@ -52,7 +52,7 @@ function deleteTask(auth: Auth | undefined, taskId: string) {
 }
 
 function seedProject(ownerId: string, name = "Board") {
-  return prisma.project.create({ data: { ownerId, name } });
+  return prisma.project.create({ data: { ownerId, name, members: { create: { userId: ownerId, role: "OWNER" } } } });
 }
 
 function seedTask(projectId: string, title: string, extra: { description?: string; status?: "TODO" | "IN_PROGRESS" | "DONE"; createdAt?: Date } = {}) {
