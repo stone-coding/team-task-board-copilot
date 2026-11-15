@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createTaskSchema } from "@/lib/task-schemas";
 import { getAuthenticatedUserId } from "@/server/auth/session";
-import { notFoundError, readJson, unauthenticated, validationError, withErrorHandling } from "@/server/http";
-import { createTask, listTasks } from "@/server/services/tasks";
+import { jsonError, notFoundError, readJson, unauthenticated, validationError, withErrorHandling } from "@/server/http";
+import { createTask, InvalidAssigneeError, listTasks } from "@/server/services/tasks";
 
 type Context = RouteContext<"/api/v1/projects/[projectId]/tasks">;
 
@@ -34,7 +34,15 @@ export const POST = withErrorHandling(async (request: NextRequest, context: Cont
   }
 
   const { projectId } = await context.params;
-  const task = await createTask(userId, projectId, parsed.data);
+  let task;
+  try {
+    task = await createTask(userId, projectId, parsed.data);
+  } catch (error) {
+    if (error instanceof InvalidAssigneeError) {
+      return jsonError(400, "VALIDATION_ERROR", error.message);
+    }
+    throw error;
+  }
   if (!task) {
     return notFoundError(PROJECT_NOT_FOUND);
   }

@@ -3,14 +3,16 @@ import { readTaskFields, TaskFields } from "@/components/board/TaskFields";
 import { FormError } from "@/components/ui/FormError";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
+import type { ProjectMemberInfo } from "@/lib/projects";
 import type { Task } from "@/lib/tasks";
 
 type AddTaskFormProps = {
   projectId: string;
   onCreated: (task: Task) => void;
+  members?: ProjectMemberInfo[];
 };
 
-export function AddTaskForm({ projectId, onCreated }: AddTaskFormProps) {
+export function AddTaskForm({ projectId, onCreated, members = [] }: AddTaskFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -54,8 +56,10 @@ export function AddTaskForm({ projectId, onCreated }: AddTaskFormProps) {
     >
       <p className="text-sm font-semibold text-zinc-900">New task</p>
       <FormError message={error} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_9rem_auto] md:items-start">
-        <TaskFields />
+      <div
+        className={`grid grid-cols-1 gap-3 md:items-start ${members.length > 0 ? "md:grid-cols-2 lg:grid-cols-[1fr_2fr_9rem_10rem_auto]" : "md:grid-cols-[1fr_2fr_9rem_auto]"}`}
+      >
+        <TaskFields members={members} />
         <div className="md:self-end">
           <SubmitButton label="Add task" pending={pending} />
         </div>

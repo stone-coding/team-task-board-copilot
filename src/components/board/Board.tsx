@@ -11,11 +11,14 @@ import { boardReducer, groupTasksByStatus } from "@/lib/board";
 import { summarizeTasks } from "@/lib/project-stats";
 import { EMPTY_FILTERS, filterTasks, hasActiveFilters } from "@/lib/task-filters";
 import { TASK_STATUSES } from "@/lib/task-status";
+import type { ProjectMemberInfo } from "@/lib/projects";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
 type BoardProps = {
   projectId: string;
   initialTasks: Task[];
+  /** Project members, for assigning tasks and filtering by assignee. */
+  members?: ProjectMemberInfo[];
 };
 
 async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
@@ -31,7 +34,7 @@ async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
   return body.task;
 }
 
-export function Board({ projectId, initialTasks }: BoardProps) {
+export function Board({ projectId, initialTasks, members = [] }: BoardProps) {
   const [{ tasks, error }, dispatch] = useReducer(boardReducer, { tasks: initialTasks, error: null });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const visibleTasks = filterTasks(tasks, filters);
@@ -62,9 +65,9 @@ export function Board({ projectId, initialTasks }: BoardProps) {
   return (
     <div className="flex flex-col gap-4">
       <ProjectOverview stats={summarizeTasks(tasks)} />
-      <AddTaskForm projectId={projectId} onCreated={(task) => dispatch({ type: "taskAdded", task })} />
+      <AddTaskForm projectId={projectId} members={members} onCreated={(task) => dispatch({ type: "taskAdded", task })} />
       <FormError message={error} />
-      <TaskFilters filters={filters} onChange={setFilters} shown={visibleTasks.length} total={tasks.length} />
+      <TaskFilters filters={filters} onChange={setFilters} shown={visibleTasks.length} total={tasks.length} members={members} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {TASK_STATUSES.map((status) => (
           <BoardColumn
@@ -72,6 +75,7 @@ export function Board({ projectId, initialTasks }: BoardProps) {
             status={status}
             tasks={tasksByStatus[status]}
             emptyMessage={emptyMessage}
+            members={members}
             onStatusChange={handleStatusChange}
             onTaskSaved={(task) => dispatch({ type: "taskUpdated", task })}
             onTaskDeleted={(taskId) => dispatch({ type: "taskRemoved", taskId })}

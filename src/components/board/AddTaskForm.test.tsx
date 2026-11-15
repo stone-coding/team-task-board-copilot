@@ -21,6 +21,38 @@ describe("AddTaskForm", () => {
     expect(screen.getByRole("button", { name: "Add task" })).toHaveAttribute("type", "submit");
   });
 
+  it("has no Assignee select when no members are given", () => {
+    render(<AddTaskForm projectId="p1" onCreated={vi.fn()} />);
+
+    expect(screen.queryByRole("combobox", { name: "Assignee" })).not.toBeInTheDocument();
+  });
+
+  it("assigns the new task to the chosen member, defaulting to Unassigned", async () => {
+    const members = [
+      { userId: "u1", name: "Olivia", email: "olivia@example.com", role: "OWNER" as const },
+      { userId: "u2", name: "Mason", email: "mason@example.com", role: "MEMBER" as const },
+    ];
+    const fetchMock = mockFetch(201, { task: { id: "t9", projectId: "p1", title: "Book venue", status: "TODO", priority: "MEDIUM" } });
+    const user = userEvent.setup();
+    render(<AddTaskForm projectId="p1" onCreated={vi.fn()} members={members} />);
+
+    const assignee = screen.getByRole("combobox", { name: "Assignee" });
+    expect(assignee).toHaveValue("");
+    expect(Array.from((assignee as HTMLSelectElement).options).map((option) => option.textContent)).toEqual([
+      "Unassigned",
+      "Olivia",
+      "Mason",
+    ]);
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Book venue");
+    await user.selectOptions(assignee, "Mason");
+    await user.click(screen.getByRole("button", { name: "Add task" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/projects/p1/tasks",
+      expect.objectContaining({ body: JSON.stringify({ title: "Book venue", description: "", priority: "MEDIUM", assigneeId: "u2" }) }),
+    );
+  });
+
   it("has a labelled Priority select that defaults to Medium", () => {
     render(<AddTaskForm projectId="p1" onCreated={vi.fn()} />);
 

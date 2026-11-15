@@ -74,6 +74,7 @@ describe("Prisma PostgreSQL schema", () => {
     const schema = readFileSync(schemaPath, "utf8");
 
     expectDeclaration(getBlock(schema, "model", "User"), "memberships ProjectMember[]");
+    expectDeclaration(getBlock(schema, "model", "User"), "assignedTasks Task[]");
     expectDeclaration(getBlock(schema, "model", "Project"), "members ProjectMember[]");
   });
 
@@ -123,6 +124,9 @@ describe("Prisma PostgreSQL schema", () => {
     expectDeclaration(fields, "description String?");
     expectDeclaration(fields, "status TaskStatus @default(TODO)");
     expectDeclaration(fields, "priority TaskPriority @default(MEDIUM)");
+    expectDeclaration(fields, "assigneeId String?");
+    expectDeclaration(fields, "assignee User? @relation(fields: [assigneeId], references: [id], onDelete: SetNull)");
+    expectDeclaration(fields, "@@index([projectId, assigneeId])");
     expectDeclaration(fields, "createdAt DateTime @default(now())");
     expectDeclaration(fields, "updatedAt DateTime @updatedAt");
     expectDeclaration(

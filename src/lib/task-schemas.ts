@@ -6,7 +6,7 @@ export const TASK_TITLE_MAX_LENGTH = 120;
 export const TASK_DESCRIPTION_MAX_LENGTH = 2000;
 
 const TITLE_REQUIRED = "Task title is required";
-const NOTHING_TO_UPDATE = "Provide at least one of title, description, status, or priority";
+const NOTHING_TO_UPDATE = "Provide at least one of title, description, status, priority, or assigneeId";
 
 const titleSchema = z
   .string({ error: TITLE_REQUIRED })
@@ -29,9 +29,14 @@ const statusSchema = z.enum(TASK_STATUSES, { error: `Status must be one of ${TAS
 
 const prioritySchema = z.enum(TASK_PRIORITIES, { error: `Priority must be one of ${TASK_PRIORITIES.join(", ")}` });
 
+const ASSIGNEE_INVALID = "Assignee must be a user id or null";
+
+// A user id, or null to unassign. Membership of the task's project is checked by the service.
+const assigneeSchema = z.string({ error: ASSIGNEE_INVALID }).min(1, { error: ASSIGNEE_INVALID }).nullable();
+
 // New tasks always start in TODO; a status in the body is ignored.
 export const createTaskSchema = z.object(
-  { title: titleSchema, description: descriptionSchema, priority: prioritySchema.optional() },
+  { title: titleSchema, description: descriptionSchema, priority: prioritySchema.optional(), assigneeId: assigneeSchema.optional() },
   { error: TITLE_REQUIRED },
 );
 
@@ -42,6 +47,7 @@ export const updateTaskSchema = z
       description: descriptionSchema,
       status: statusSchema.optional(),
       priority: prioritySchema.optional(),
+      assigneeId: assigneeSchema.optional(),
     },
     { error: NOTHING_TO_UPDATE },
   )

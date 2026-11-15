@@ -3,7 +3,15 @@ import type { Task, TaskPriority, TaskStatus } from "@/lib/tasks";
 import { prisma } from "@/server/db";
 import { getRole, memberOf } from "@/server/services/memberships";
 
-const TASK_SELECT = { id: true, projectId: true, title: true, description: true, status: true, priority: true } as const;
+const TASK_SELECT = {
+  id: true,
+  projectId: true,
+  title: true,
+  description: true,
+  status: true,
+  priority: true,
+  assignee: { select: { id: true, name: true } },
+} as const;
 
 type TaskRow = {
   id: string;
@@ -12,10 +20,31 @@ type TaskRow = {
   description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
+  assignee: { id: string; name: string } | null;
 };
 
-function toTask({ description, ...task }: TaskRow): Task {
-  return description === null ? task : { ...task, description };
+function toTask({ description, assignee, ...fields }: TaskRow): Task {
+  const task: Task = { ...fields };
+  if (description !== null) {
+    task.description = description;
+  }
+  if (assignee) {
+    task.assignee = { userId: assignee.id, name: assignee.name };
+  }
+  return task;
+}
+
+/** The requested assignee is not a member of the task's project. */
+export class InvalidAssigneeError extends Error {
+  constructor() {
+    super("Assignee must be a member of this project");
+  }
+}
+
+async function assertAssignable(projectId: string, assigneeId: string | null | undefined) {
+  if (assigneeId && !(await getRole(assigneeId, projectId))) {
+    throw new InvalidAssigneeError();
+  }
 }
 
 // Tasks are reached only through a project the caller is a member of (OWNER or MEMBER),
@@ -47,15 +76,23 @@ export async function createTask(userId: string, projectId: string, input: Creat
   if (!(await isMember(userId, projectId))) {
     return null;
   }
+  await assertAssignable(projectId, input.assigneeId);
   const row = await prisma.task.create({
-    data: { projectId, title: input.title, description: input.description, priority: input.priority },
+    data: { projectId, title: input.title, description: input.description, priority: input.priority, assigneeId: input.assigneeId },
     select: TASK_SELECT,
   });
   return toTask(row);
 }
 
-/** Returns null when no such task is in a project the caller belongs to. */
+/** Returns null when no such task is in a project the caller belongs to; access is checked before the assignee. */
 export async function updateTask(userId: string, taskId: string, input: UpdateTaskInput): Promise<Task | null> {
+  if (input.assigneeId !== undefined) {
+    const task = await prisma.task.findFirst({ where: memberTask(userId, taskId), select: { projectId: true } });
+    if (!task) {
+      return null;
+    }
+    await assertAssignable(task.projectId, input.assigneeId);
+  }
   const { count } = await prisma.task.updateMany({ where: memberTask(userId, taskId), data: input });
   if (count === 0) {
     return null;

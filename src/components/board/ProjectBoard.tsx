@@ -44,7 +44,13 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
         <h1 className="text-2xl font-semibold tracking-tight break-words">{project.name}</h1>
       </div>
       <MembersPanel projectId={project.id} currentUserId={userId} role={project.role} members={members} />
-      <Board key={project.id} projectId={project.id} initialTasks={tasks} />
+      {/* Keyed on membership too: after a member is removed, the refreshed (unassigned) tasks replace the old state. */}
+      <Board
+        key={`${project.id}:${members.map((member) => member.userId).join(",")}`}
+        projectId={project.id}
+        initialTasks={tasks}
+        members={members}
+      />
     </main>
   );
 }
