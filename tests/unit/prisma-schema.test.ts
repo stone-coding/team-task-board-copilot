@@ -51,6 +51,32 @@ describe("Prisma PostgreSQL schema", () => {
     expect(getBlock(schema, "enum", "TaskPriority")).toEqual(["LOW", "MEDIUM", "HIGH"]);
   });
 
+  it("defines the project roles", () => {
+    const schema = readFileSync(schemaPath, "utf8");
+
+    expect(getBlock(schema, "enum", "ProjectRole")).toEqual(["OWNER", "MEMBER"]);
+  });
+
+  it("defines ProjectMember with a composite key, cascading relations, and a user index", () => {
+    const fields = getBlock(readFileSync(schemaPath, "utf8"), "model", "ProjectMember");
+
+    expectDeclaration(fields, "projectId String");
+    expectDeclaration(fields, "userId String");
+    expectDeclaration(fields, "role ProjectRole @default(MEMBER)");
+    expectDeclaration(fields, "createdAt DateTime @default(now())");
+    expectDeclaration(fields, "project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "user User @relation(fields: [userId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "@@id([projectId, userId])");
+    expectDeclaration(fields, "@@index([userId])");
+  });
+
+  it("links users and projects to their memberships", () => {
+    const schema = readFileSync(schemaPath, "utf8");
+
+    expectDeclaration(getBlock(schema, "model", "User"), "memberships ProjectMember[]");
+    expectDeclaration(getBlock(schema, "model", "Project"), "members ProjectMember[]");
+  });
+
   it("defines every User field and its unique email constraint", () => {
     const fields = getBlock(
       readFileSync(schemaPath, "utf8"),

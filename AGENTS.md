@@ -1,6 +1,6 @@
 # AGENTS.md — Team Task Board
 
-<!-- Shared rules for AI assistants and humans. Maintainer: Haomiao Shi (with Tyler Sarna through Sprint 1) · v6.1 (§12).
+<!-- Shared rules for AI assistants and humans. Maintainer: Haomiao Shi (with Tyler Sarna through Sprint 1) · v6.2 (§12).
      Tool: Visual Studio Code + GitHub Copilot Chat (§11). Loads on every request: keep under ~200 lines and link to docs/.
      Change only through its own self-reviewed PR (§7); revisit at every retro. This file is the tiebreaker. -->
 
@@ -28,7 +28,7 @@ npx prisma validate  # from #1; run `npx prisma generate` after any schema chang
 Team Task Board is a minimal Kanban app: users group work into projects and move tasks **To Do → In Progress → Done**. CS6983 pair project, continued solo by Haomiao Shi from Sprint 2 with the instructor's approval after Tyler Sarna left the course. Sprint 1: Oct 26 – Nov 2, 2026. Sprint 2: Nov 3 – Nov 13, 2026: internal Sprint 2 deadline Fri Nov 13, 11:30 PM PST, for all Sprint 2 issues, tests, docs, and PRs. Official Canvas Project 2 deadline: Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST).
 - Requirements (US1–US5, acceptance criteria, data model §6): `docs/prd.md`. UI spec: `DESIGN.md` and `docs/mockups/` (`board.png` 1280px, `board-mobile.png` 375px, `board.html` if you cannot view images).
 - Work tracking: GitHub Issues + Project "Team Task Board". **The issue assignee owns the issue** and the files it creates; ownership is never set in this file.
-- Out of scope unless a tracked issue adds it: drag-and-drop, WebSockets, notifications, team invitations, multi-user sharing.
+- Out of scope unless a tracked issue adds it: drag-and-drop, WebSockets, notifications, email invitations. Multi-user sharing is in scope through project memberships (#49): add existing accounts by email, OWNER/MEMBER roles, refresh-based.
 
 ## 2. Stack
 Major versions: **Next.js 16** (App Router), **React 19**, **TypeScript 5** (strict), **Tailwind CSS 4**, **Prisma 7** (from #1), **PostgreSQL**, **Vitest 5** + Testing Library, **Playwright 1**, ESLint 9. Exact versions: `package.json` / `package-lock.json` only. Do not upgrade without an issue.
@@ -142,7 +142,7 @@ docs/                       prd.md, mockups/, api/openapi.yaml, architecture.md,
 - CI/deploy work is done only after checking the actual GitHub Actions run, Vercel deployment, and `/api/v1/health`.
 
 ## 9. Security and accessibility
-- Validate every request body with zod at the route boundary. Hash passwords with `bcryptjs`; JWT (`jose`) in `httpOnly`, `Secure`, `SameSite=Lax` cookies. Scope every query by the owner's user id; other users' resources return **404**, not 403.
+- Validate every request body with zod at the route boundary. Hash passwords with `bcryptjs`; JWT (`jose`) in `httpOnly`, `Secure`, `SameSite=Lax` cookies. Scope every project, task, and member query by the caller's membership (`getRole`/`memberOf` in `src/server/services/memberships.ts`); resources in projects the caller does not belong to return **404**, never 403. OWNER-only actions return **403** to a MEMBER.
 - Secrets come only from environment variables; never log tokens or passwords. A committed secret must be rotated, not just deleted. No analytics, external scripts, or network calls the issue does not require.
 - WCAG 2.1 AA: one `<h1>`, `<h2>` per column, `<h3>` per card; every control has an accessible name; keyboard operable with visible `focus-visible` styles; color never the only signal; text contrast ≥ 4.5:1 (`text-zinc-600` or darker on white).
 
@@ -168,6 +168,7 @@ Not required, and never a reason to add dependencies without an issue:
 
 ## 12. Maintenance and changelog
 Changes go through a PR that is self-reviewed with green CI (§7). Update the PRD, OpenAPI, `DESIGN.md`, and this file together when decisions change. Personal HW3 experiments and reflections stay out of this file.
+- **v6.2 (2026-11-15, #49):** multi-user sharing moves into scope: access comes from `ProjectMember` (OWNER/MEMBER) instead of `Project.ownerId`; nonmembers still get 404; OWNER-only actions get 403.
 - **v6.1 (2026-11-14, #23):** deadline correction. Nov 13, 11:30 PM PST is only the internal Sprint 2 deadline; the official Canvas Project 2 deadline is Sun Nov 15, 2026, 11:59 PM PST (Mon Nov 16, 2:59 AM EST). The v6 entry below is kept as written.
 - **v6 (2026-11-11, solo):** Tyler Sarna left the course; with the instructor's approval Haomiao Shi finishes Sprint 2 alone. Partner review is replaced by a recorded self-review plus green CI; PO/SM no longer rotate; Sprint 2 internal and Canvas deadlines both Fri Nov 13, 2026, 11:30 PM PST.
 - **v5 (2026-11-03, #3):** hosted database is Neon (resolves the Supabase/Neon conflict); migrations run during each Vercel build instead of a manual production step.

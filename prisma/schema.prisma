@@ -19,22 +19,42 @@ enum TaskPriority {
   HIGH
 }
 
+enum ProjectRole {
+  OWNER
+  MEMBER
+}
+
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String          @id @default(cuid())
+  email        String          @unique
   name         String
   passwordHash String
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime        @default(now())
   projects     Project[]
+  memberships  ProjectMember[]
 }
 
 model Project {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   name      String
   ownerId   String
-  createdAt DateTime @default(now())
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+  owner     User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   tasks     Task[]
+  members   ProjectMember[]
+}
+
+// Access to a project and its tasks comes only from a membership row; the creator gets the OWNER row.
+model ProjectMember {
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
 }
 
 model Task {

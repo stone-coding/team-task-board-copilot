@@ -37,7 +37,7 @@ function createProject(auth: Auth, body: unknown) {
 }
 
 function seedProject(ownerId: string, name: string, createdAt?: Date) {
-  return prisma.project.create({ data: { ownerId, name, createdAt } });
+  return prisma.project.create({ data: { ownerId, name, createdAt, members: { create: { userId: ownerId, role: "OWNER" } } } });
 }
 
 describe("projects API", () => {
@@ -108,7 +108,7 @@ describe("projects API", () => {
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body).toEqual({
-        project: { id: expect.any(String), name: "Launch plan", createdAt: expect.any(String) },
+        project: { id: expect.any(String), name: "Launch plan", createdAt: expect.any(String), role: "OWNER" },
       });
       expect(Number.isNaN(Date.parse(body.project.createdAt))).toBe(false);
       const stored = await prisma.project.findUnique({ where: { id: body.project.id } });
@@ -159,7 +159,7 @@ describe("projects API", () => {
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.projects.map((project: { name: string }) => project.name)).toEqual(["Newest", "Middle", "Oldest"]);
-      expect(body.projects[0]).toEqual({ id: expect.any(String), name: "Newest", createdAt: "2026-10-03T00:00:00.000Z" });
+      expect(body.projects[0]).toEqual({ id: expect.any(String), name: "Newest", createdAt: "2026-10-03T00:00:00.000Z", role: "OWNER" });
     });
 
     it("returns an empty list when the caller has no projects", async () => {
@@ -174,7 +174,7 @@ describe("projects API", () => {
       const response = await getRoute(request(`/${project.id}`, { auth: ada }), params(project.id));
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
-        project: { id: project.id, name: "Roadmap", createdAt: "2026-10-05T12:00:00.000Z" },
+        project: { id: project.id, name: "Roadmap", createdAt: "2026-10-05T12:00:00.000Z", role: "OWNER" },
       });
     });
 
@@ -242,7 +242,7 @@ describe("projects API", () => {
     });
 
     it("returns 500 INTERNAL_ERROR from the list endpoint", async () => {
-      vi.spyOn(prisma.project, "findMany").mockRejectedValueOnce(DB_ERROR);
+      vi.spyOn(prisma.projectMember, "findMany").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await listRoute(request("", { auth: ada })));
     });
 
@@ -252,12 +252,13 @@ describe("projects API", () => {
     });
 
     it("returns 500 INTERNAL_ERROR from the get endpoint", async () => {
-      vi.spyOn(prisma.project, "findFirst").mockRejectedValueOnce(DB_ERROR);
+      vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await getRoute(request("/any", { auth: ada }), params("any")));
     });
 
     it("returns 500 INTERNAL_ERROR from the delete endpoint", async () => {
-      vi.spyOn(prisma.project, "deleteMany").mockRejectedValueOnce(DB_ERROR);
+      // The membership check runs first, so the outage surfaces there.
+      vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await deleteRoute(request("/any", { auth: ada, method: "DELETE" }), params("any")));
     });
   });

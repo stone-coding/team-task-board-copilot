@@ -1,25 +1,26 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { CreateProjectInput } from "@/lib/project-schemas";
-import type { Project } from "@/lib/projects";
+import type { Project, ProjectRole } from "@/lib/projects";
 import { prisma } from "@/server/db";
+import { getRole } from "@/server/services/memberships";
 
 const PROJECT_SELECT = { id: true, name: true, createdAt: true } as const;
 
 type ProjectRow = { id: string; name: string; createdAt: Date };
 
-function toProject(row: ProjectRow): Project {
-  return { id: row.id, name: row.name, createdAt: row.createdAt.toISOString() };
+function toProject(row: ProjectRow, role: ProjectRole): Project {
+  return { id: row.id, name: row.name, createdAt: row.createdAt.toISOString(), role };
 }
 
-// Every query filters on ownerId, so another user's project behaves exactly like a missing one.
+// Access comes from ProjectMember rows: a project the caller does not belong to behaves exactly like a missing one.
 
-export async function listProjects(ownerId: string): Promise<Project[]> {
-  const rows = await prisma.project.findMany({
-    where: { ownerId },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    select: PROJECT_SELECT,
+export async function listProjects(userId: string): Promise<Project[]> {
+  const memberships = await prisma.projectMember.findMany({
+    where: { userId },
+    orderBy: [{ project: { createdAt: "desc" } }, { projectId: "desc" }],
+    select: { role: true, project: { select: PROJECT_SELECT } },
   });
-  return rows.map(toProject);
+  return memberships.map(({ role, project }) => toProject(project, role));
 }
 
 /** The token was valid but its user no longer exists, so the owner foreign key rejected the insert. */
@@ -29,9 +30,14 @@ export class OwnerNotFoundError extends Error {
   }
 }
 
+/** Creates the project and the creator's OWNER membership in one statement. */
 export async function createProject(ownerId: string, input: CreateProjectInput): Promise<Project> {
   try {
-    return toProject(await prisma.project.create({ data: { ownerId, name: input.name }, select: PROJECT_SELECT }));
+    const row = await prisma.project.create({
+      data: { ownerId, name: input.name, members: { create: { userId: ownerId, role: "OWNER" } } },
+      select: PROJECT_SELECT,
+    });
+    return toProject(row, "OWNER");
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003") {
       throw new OwnerNotFoundError();
@@ -40,13 +46,25 @@ export async function createProject(ownerId: string, input: CreateProjectInput):
   }
 }
 
-export async function findProject(ownerId: string, projectId: string): Promise<Project | null> {
-  const row = await prisma.project.findFirst({ where: { id: projectId, ownerId }, select: PROJECT_SELECT });
-  return row ? toProject(row) : null;
+export async function findProject(userId: string, projectId: string): Promise<Project | null> {
+  const membership = await prisma.projectMember.findUnique({
+    where: { projectId_userId: { projectId, userId } },
+    select: { role: true, project: { select: PROJECT_SELECT } },
+  });
+  return membership ? toProject(membership.project, membership.role) : null;
 }
 
-/** Deletes the project and, by cascade, its tasks. Returns false when the caller owns no such project. */
-export async function deleteProject(ownerId: string, projectId: string): Promise<boolean> {
-  const { count } = await prisma.project.deleteMany({ where: { id: projectId, ownerId } });
-  return count > 0;
+export type DeleteProjectResult = "deleted" | "forbidden" | "not_found";
+
+/** Only the OWNER may delete; the cascade removes tasks and memberships. */
+export async function deleteProject(userId: string, projectId: string): Promise<DeleteProjectResult> {
+  const role = await getRole(userId, projectId);
+  if (!role) {
+    return "not_found";
+  }
+  if (role !== "OWNER") {
+    return "forbidden";
+  }
+  const { count } = await prisma.project.deleteMany({ where: { id: projectId, members: { some: { userId, role: "OWNER" } } } });
+  return count > 0 ? "deleted" : "not_found";
 }

@@ -50,6 +50,12 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 - [ ] Every `/api/v1` endpoint is described in an OpenAPI 3 document, viewable at `/api/docs`.
 - [ ] Errors use the shape `{ "error": { "code": string, "message": string } }`.
 
+**US6. Shared projects and roles** (added after Sprint 2, #49)
+- [x] The owner adds an existing user to a project by email; the project then appears in both users' project lists.
+- [x] OWNER and MEMBER can view the board and create, edit, move, and delete tasks; only the OWNER can delete the project or add and remove members (a MEMBER gets 403).
+- [x] A user who is not a member gets 404 for the project, its tasks, and its members, even with a direct link or id.
+- [x] Removing a member revokes access on the next request; a member can leave a project; the owner cannot be removed.
+
 ## 4. Design reference
 
 - Mockup: [`docs/mockups/board.png`](mockups/board.png) (1280px) and [`docs/mockups/board-mobile.png`](mockups/board-mobile.png) (375px). The source is [`docs/mockups/board.html`](mockups/board.html).
@@ -58,15 +64,18 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 
 ## 5. MVP scope
 
-**In scope:** US1–US5.
+**In scope:** US1–US5, plus US6 (shared projects and roles), added after Sprint 2.
 
-**Explicitly out of scope:** drag-and-drop, real-time sync or WebSockets, notifications, team invitations and roles, due dates, comments, file attachments, OAuth providers, mobile apps.
+**Explicitly out of scope:** drag-and-drop, real-time sync or WebSockets (collaboration is refresh-based), notifications, email invitations (members are added by the email of an existing account), due dates, file attachments, OAuth providers, mobile apps.
 
 ## 6. Data model (Prisma, planned for Sprint 1)
 
 ```
 User    (id, email unique, name, passwordHash, createdAt)
-Project (id, name, ownerId → User, createdAt)                 on delete cascade
+Project (id, name, ownerId → User (creator), createdAt)       on delete cascade
+ProjectMember (projectId → Project, userId → User, role OWNER|MEMBER default MEMBER, createdAt)
+        primary key (projectId, userId), index (userId), both on delete cascade (#49)
+        access to a project and its tasks comes only from this table
 Task    (id, projectId → Project, title, description?, status TODO|IN_PROGRESS|DONE,
          priority LOW|MEDIUM|HIGH default MEDIUM (#47),
          createdAt, updatedAt)                                  index (projectId, status)

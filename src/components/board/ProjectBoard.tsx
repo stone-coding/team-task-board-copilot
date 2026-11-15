@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Board } from "@/components/board/Board";
 import { FOCUS_RING } from "@/components/ui/button-styles";
 import { getCurrentUserId } from "@/server/auth/current-user";
+import { MembersPanel } from "@/components/projects/MembersPanel";
+import { listMembers } from "@/server/services/members";
 import { findProject } from "@/server/services/projects";
 import { listTasks } from "@/server/services/tasks";
 
@@ -17,9 +19,13 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
     redirect(`/login?next=${encodeURIComponent(`/projects/${projectId}`)}`);
   }
 
-  // Same owner-scoped services as the API: another user's project is not found.
-  const [project, tasks] = await Promise.all([findProject(userId, projectId), listTasks(userId, projectId)]);
-  if (!project || !tasks) {
+  // Same membership-scoped services as the API: a project the user does not belong to is not found.
+  const [project, tasks, members] = await Promise.all([
+    findProject(userId, projectId),
+    listTasks(userId, projectId),
+    listMembers(userId, projectId),
+  ]);
+  if (!project || !tasks || !members) {
     notFound();
   }
 
@@ -37,6 +43,7 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
         </nav>
         <h1 className="text-2xl font-semibold tracking-tight break-words">{project.name}</h1>
       </div>
+      <MembersPanel projectId={project.id} currentUserId={userId} role={project.role} members={members} />
       <Board key={project.id} projectId={project.id} initialTasks={tasks} />
     </main>
   );

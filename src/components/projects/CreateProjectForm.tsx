@@ -45,7 +45,7 @@ export function CreateProjectForm() {
     >
       <div>
         <p className="text-sm font-semibold text-zinc-900">New project</p>
-        <p className="mt-0.5 text-xs text-zinc-600">Only you can see the projects you create.</p>
+        <p className="mt-0.5 text-xs text-zinc-600">You become its owner and can add teammates from its board.</p>
       </div>
       <FormError message={error} />
       <TextField

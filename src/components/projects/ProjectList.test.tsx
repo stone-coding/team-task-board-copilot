@@ -5,8 +5,8 @@ import { ProjectList } from "@/components/projects/ProjectList";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 const PROJECTS = [
-  { id: "p2", name: "Newest", createdAt: "2026-10-02T00:00:00.000Z" },
-  { id: "p1", name: "Oldest", createdAt: "2026-10-01T00:00:00.000Z" },
+  { id: "p2", name: "Newest", createdAt: "2026-10-02T00:00:00.000Z", role: "OWNER" as const },
+  { id: "p1", name: "Oldest", createdAt: "2026-10-01T00:00:00.000Z", role: "MEMBER" as const },
 ];
 
 describe("ProjectList", () => {

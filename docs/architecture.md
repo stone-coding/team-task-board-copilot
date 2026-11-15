@@ -19,7 +19,7 @@ flowchart TD
   DB -->|"@prisma/adapter-pg"| PG[("PostgreSQL")]
 ```
 
-Server components read their initial data by calling the same services directly, with the user id from `getCurrentUserId()` (`src/server/auth/current-user.ts`). Client components change data only through `/api/v1`: the projects page then calls `router.refresh()` to re-render, and the board updates its own state from the API response (see *Board state*). Each service function takes the owner's user id and filters every query on it, so another user's resource looks exactly like a missing one (404). Route handlers are wrapped in `withErrorHandling` (`src/server/http.ts`), which logs unexpected errors on the server and returns a generic `500 INTERNAL_ERROR`.
+Server components read their initial data by calling the same services directly, with the user id from `getCurrentUserId()` (`src/server/auth/current-user.ts`). Client components change data only through `/api/v1`: the projects page then calls `router.refresh()` to re-render, and the board updates its own state from the API response (see *Board state*). Each service function takes the caller's user id and checks membership in the project (`getRole` in `src/server/services/memberships.ts`, a `ProjectMember` lookup) before reading or writing, so a project, task, or member the caller does not belong to looks exactly like a missing one (404). OWNER-only actions (deleting a project, adding or removing members) return 403 to a MEMBER. Removing a membership revokes access on the next request, because nothing is cached in the JWT except the user id. Route handlers are wrapped in `withErrorHandling` (`src/server/http.ts`), which logs unexpected errors on the server and returns a generic `500 INTERNAL_ERROR`.
 
 `src/server/db.ts` builds one `PrismaClient` with the `PrismaPg` driver adapter from `DATABASE_URL`, cached on `globalThis` outside production so Next.js hot reload does not open new connection pools.
 
@@ -68,8 +68,10 @@ Source: `prisma/schema.prisma`; migrations in `prisma/migrations/`.
 
 ```mermaid
 erDiagram
-  User ||--o{ Project : owns
+  User ||--o{ Project : creates
   Project ||--o{ Task : contains
+  Project ||--o{ ProjectMember : "has members"
+  User ||--o{ ProjectMember : "belongs to"
 
   User {
     String id PK "cuid"
@@ -82,6 +84,12 @@ erDiagram
     String id PK "cuid"
     String name
     String ownerId FK "on delete cascade"
+    DateTime createdAt
+  }
+  ProjectMember {
+    String projectId PK,FK "on delete cascade"
+    String userId PK,FK "on delete cascade"
+    ProjectRole role "OWNER | MEMBER, default MEMBER"
     DateTime createdAt
   }
   Task {

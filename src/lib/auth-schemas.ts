@@ -4,7 +4,7 @@ export const PASSWORD_MIN_LENGTH = 8;
 // bcrypt ignores bytes past 72, so longer passwords would silently collide.
 const PASSWORD_MAX_LENGTH = 72;
 
-const emailSchema = z
+export const emailSchema = z
   .string({ error: "Email is required" })
   .trim()
   .toLowerCase()
