@@ -91,6 +91,42 @@ describe("Prisma PostgreSQL schema", () => {
     expectDeclaration(fields, "@@index([taskId, createdAt])");
     expectDeclaration(getBlock(schema, "model", "Task"), "comments Comment[]");
     expectDeclaration(getBlock(schema, "model", "User"), "comments Comment[]");
+  });
+
+  it("defines the activity types", () => {
+    expect(getBlock(readFileSync(schemaPath, "utf8"), "enum", "ActivityType")).toEqual([
+      "TASK_CREATED",
+      "TASK_UPDATED",
+      "TASK_MOVED",
+      "TASK_ASSIGNED",
+      "TASK_DELETED",
+      "COMMENT_ADDED",
+      "COMMENT_DELETED",
+      "MEMBER_ADDED",
+      "MEMBER_REMOVED",
+      "MEMBER_LEFT",
+    ]);
+  });
+
+  it("defines Activity with actor, optional task details, cascades, and a (projectId, createdAt) index", () => {
+    const schema = readFileSync(schemaPath, "utf8");
+    const fields = getBlock(schema, "model", "Activity");
+
+    expectDeclaration(fields, "id String @id @default(cuid())");
+    expectDeclaration(fields, "projectId String");
+    expectDeclaration(fields, "actorId String");
+    expectDeclaration(fields, "type ActivityType");
+    expectDeclaration(fields, "taskId String?");
+    expectDeclaration(fields, "taskTitle String?");
+    expectDeclaration(fields, "fromStatus TaskStatus?");
+    expectDeclaration(fields, "toStatus TaskStatus?");
+    expectDeclaration(fields, "subjectName String?");
+    expectDeclaration(fields, "createdAt DateTime @default(now())");
+    expectDeclaration(fields, "project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "@@index([projectId, createdAt])");
+    expectDeclaration(getBlock(schema, "model", "Project"), "activity Activity[]");
+    expectDeclaration(getBlock(schema, "model", "User"), "activity Activity[]");
     expectDeclaration(getBlock(schema, "model", "Project"), "members ProjectMember[]");
   });
 
