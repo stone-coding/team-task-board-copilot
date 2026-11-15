@@ -18,6 +18,7 @@ A minimal Kanban task board. Users sign up, group work into projects, and move t
 - **Project overview** (#40): above the board, cards show total tasks, in progress, completed, and the completion rate, with a progress bar. They are derived from the board's tasks and update as soon as a card moves.
 - **Tasks** (#7, #9): add a task (title required, description optional), edit its title and description, and delete it after confirming.
 - **REST API** (#7, #11, US5): every `/api/v1` endpoint is described in [docs/api/openapi.yaml](docs/api/openapi.yaml) and browsable with Swagger UI at `/api/docs`. Errors use `{ "error": { "code", "message" } }`.
+- **App shell** (#41): a shared header with the app name, Projects navigation, and Log out; a breadcrumb on each board; consistent buttons, inputs, empty states, loading skeletons, and error messages.
 - **Accessible and responsive**: native controls with labels, visible focus, announced errors; columns side by side from 768px and stacked below, with no horizontal scroll at 375px.
 
 ## Tech stack
