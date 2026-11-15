@@ -349,7 +349,7 @@ describe("tasks API", () => {
     });
 
     it("returns 500 INTERNAL_ERROR from every endpoint", async () => {
-      vi.spyOn(prisma.project, "findFirst").mockRejectedValue(DB_ERROR);
+      vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValue(DB_ERROR);
       vi.spyOn(prisma.task, "updateMany").mockRejectedValue(DB_ERROR);
       vi.spyOn(prisma.task, "deleteMany").mockRejectedValue(DB_ERROR);
 

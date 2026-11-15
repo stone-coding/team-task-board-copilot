@@ -242,7 +242,7 @@ describe("projects API", () => {
     });
 
     it("returns 500 INTERNAL_ERROR from the list endpoint", async () => {
-      vi.spyOn(prisma.project, "findMany").mockRejectedValueOnce(DB_ERROR);
+      vi.spyOn(prisma.projectMember, "findMany").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await listRoute(request("", { auth: ada })));
     });
 
@@ -252,12 +252,13 @@ describe("projects API", () => {
     });
 
     it("returns 500 INTERNAL_ERROR from the get endpoint", async () => {
-      vi.spyOn(prisma.project, "findFirst").mockRejectedValueOnce(DB_ERROR);
+      vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await getRoute(request("/any", { auth: ada }), params("any")));
     });
 
     it("returns 500 INTERNAL_ERROR from the delete endpoint", async () => {
-      vi.spyOn(prisma.project, "deleteMany").mockRejectedValueOnce(DB_ERROR);
+      // The membership check runs first, so the outage surfaces there.
+      vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValueOnce(DB_ERROR);
       await expectInternalError(await deleteRoute(request("/any", { auth: ada, method: "DELETE" }), params("any")));
     });
   });
