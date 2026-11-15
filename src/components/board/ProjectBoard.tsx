@@ -50,6 +50,8 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
         projectId={project.id}
         initialTasks={tasks}
         members={members}
+        currentUserId={userId}
+        canModerate={project.role === "OWNER"}
       />
     </main>
   );

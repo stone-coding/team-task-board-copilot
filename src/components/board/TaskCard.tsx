@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { CommentThread } from "@/components/board/CommentThread";
 import { PriorityBadge } from "@/components/board/PriorityBadge";
 import { TaskDeleteConfirm } from "@/components/board/TaskDeleteConfirm";
 import { TaskEditForm } from "@/components/board/TaskEditForm";
@@ -13,13 +14,18 @@ type TaskCardProps = {
   onSaved: (task: Task) => void;
   onDeleted: (taskId: string) => void;
   members?: ProjectMemberInfo[];
+  /** The signed-in viewer; comments are available only when set. */
+  currentUserId?: string;
+  /** The viewer is the project OWNER and may delete any comment. */
+  canModerate?: boolean;
 };
 
 type Mode = "view" | "editing" | "confirmingDelete";
 
 const CARD = "rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md";
 
-export function TaskCard({ task, onStatusChange, onSaved, onDeleted, members }: TaskCardProps) {
+export function TaskCard({ task, onStatusChange, onSaved, onDeleted, members, currentUserId, canModerate = false }: TaskCardProps) {
+  const [showComments, setShowComments] = useState(false);
   const [mode, setMode] = useState<Mode>("view");
   const editRef = useRef<HTMLButtonElement>(null);
   const deleteRef = useRef<HTMLButtonElement>(null);
@@ -97,6 +103,17 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted, members }: 
             </select>
           </label>
           <div className="flex gap-1">
+            {currentUserId ? (
+              <button
+                type="button"
+                onClick={() => setShowComments((open) => !open)}
+                aria-expanded={showComments}
+                aria-label={`Comments for ${task.title}`}
+                className={GHOST_BUTTON}
+              >
+                Comments
+              </button>
+            ) : null}
             <button ref={editRef} type="button" onClick={() => setMode("editing")} aria-label={`Edit ${task.title}`} className={GHOST_BUTTON}>
               Edit
             </button>
@@ -106,6 +123,9 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted, members }: 
           </div>
         </div>
       )}
+      {currentUserId && showComments ? (
+        <CommentThread taskId={task.id} taskTitle={task.title} currentUserId={currentUserId} canModerate={canModerate} />
+      ) : null}
     </li>
   );
 }

@@ -19,6 +19,9 @@ type BoardProps = {
   initialTasks: Task[];
   /** Project members, for assigning tasks and filtering by assignee. */
   members?: ProjectMemberInfo[];
+  /** The signed-in viewer, for comments; the OWNER may moderate them. */
+  currentUserId?: string;
+  canModerate?: boolean;
 };
 
 async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
@@ -34,7 +37,7 @@ async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
   return body.task;
 }
 
-export function Board({ projectId, initialTasks, members = [] }: BoardProps) {
+export function Board({ projectId, initialTasks, members = [], currentUserId, canModerate = false }: BoardProps) {
   const [{ tasks, error }, dispatch] = useReducer(boardReducer, { tasks: initialTasks, error: null });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const visibleTasks = filterTasks(tasks, filters);
@@ -76,6 +79,8 @@ export function Board({ projectId, initialTasks, members = [] }: BoardProps) {
             tasks={tasksByStatus[status]}
             emptyMessage={emptyMessage}
             members={members}
+            currentUserId={currentUserId}
+            canModerate={canModerate}
             onStatusChange={handleStatusChange}
             onTaskSaved={(task) => dispatch({ type: "taskUpdated", task })}
             onTaskDeleted={(taskId) => dispatch({ type: "taskRemoved", taskId })}
