@@ -68,5 +68,4 @@ For CI and infrastructure issues the red step is a failing CI run: #2 [run 41648
 ## Limits of this evidence
 
 - Chat transcripts are not stored in the repository, so R0 plans and R5 summaries are not independently verifiable.
-- AI-usage notes are in Tyler's PRs (#15, #17, #18) but missing from Haomiao's PRs; this document records the tools for those PRs instead.
 - After Nov 6 there was no partner review; self-review and CI are the substitute approved in AGENTS.md v6.
