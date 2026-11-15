@@ -30,15 +30,19 @@ components:
     TaskStatus:
       type: string
       enum: [TODO, IN_PROGRESS, DONE]
+    TaskPriority:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
     Task:
       type: object
-      required: [id, projectId, title, status]
+      required: [id, projectId, title, status, priority]
       properties:
         id: { type: string }
         projectId: { type: string }
         title: { type: string, minLength: 1, maxLength: 120 }
         description: { type: string, maxLength: 2000, description: Omitted when the task has no description }
         status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/TaskPriority" }
     TaskResponse:
       type: object
       required: [task]
@@ -250,7 +254,7 @@ paths:
     post:
       operationId: createTask
       summary: Create a task
-      description: New tasks always start in `TODO`; a `status` in the body is ignored.
+      description: New tasks always start in `TODO`; a `status` in the body is ignored. `priority` defaults to `MEDIUM`.
       requestBody:
         required: true
         content:
@@ -264,6 +268,9 @@ paths:
                   type: [string, "null"]
                   maxLength: 2000
                   description: Optional; trimmed, and blank or null means no description
+                priority:
+                  $ref: "#/components/schemas/TaskPriority"
+                  description: Optional; defaults to MEDIUM
       responses:
         "201":
           description: Task created.
@@ -278,7 +285,7 @@ paths:
     patch:
       operationId: updateTask
       summary: Update a task
-      description: Change the title, description, or status. Send at least one field; omitted fields stay unchanged.
+      description: Change the title, description, status, or priority. Send at least one field; omitted fields stay unchanged.
       requestBody:
         required: true
         content:
@@ -293,6 +300,7 @@ paths:
                   maxLength: 2000
                   description: Blank or null removes the description
                 status: { $ref: "#/components/schemas/TaskStatus" }
+                priority: { $ref: "#/components/schemas/TaskPriority" }
       responses:
         "200":
           description: The updated task.

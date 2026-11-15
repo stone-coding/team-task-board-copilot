@@ -11,12 +11,14 @@ export const mockTasks: Task[] = [
     title: "Draft onboarding checklist",
     description: "List the first-week steps for new teammates.",
     status: "TODO",
+    priority: "MEDIUM",
   },
   {
     id: "t2",
     projectId: "demo",
     title: "Collect design feedback",
     status: "TODO",
+    priority: "MEDIUM",
   },
   {
     id: "t3",
@@ -24,12 +26,14 @@ export const mockTasks: Task[] = [
     title: "Write release notes",
     description: "Summarize changes for the next release.",
     status: "TODO",
+    priority: "MEDIUM",
   },
   {
     id: "t4",
     projectId: "demo",
     title: "Set up project repository",
     status: "IN_PROGRESS",
+    priority: "MEDIUM",
   },
   {
     id: "t5",
@@ -37,5 +41,6 @@ export const mockTasks: Task[] = [
     title: "Review sprint backlog",
     description: "Confirm priorities with the team.",
     status: "IN_PROGRESS",
+    priority: "MEDIUM",
   },
 ];

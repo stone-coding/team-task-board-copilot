@@ -3,7 +3,7 @@ import { summarizeTasks } from "@/lib/project-stats";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
 function tasksWith(...statuses: TaskStatus[]): Task[] {
-  return statuses.map((status, index) => ({ id: `t${index}`, projectId: "p", title: `Task ${index}`, status }));
+  return statuses.map((status, index) => ({ id: `t${index}`, projectId: "p", title: `Task ${index}`, status, priority: "MEDIUM" }));
 }
 
 describe("summarizeTasks", () => {
