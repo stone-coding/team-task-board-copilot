@@ -36,6 +36,8 @@ describe("project members migration", () => {
   });
 
   it("is additive: it drops, deletes, updates, or renames nothing", () => {
-    expect(membersMigration()).not.toMatch(/\b(DROP|DELETE|TRUNCATE|UPDATE|RENAME)\b/i);
+    // Foreign-key actions ("ON DELETE CASCADE", "ON UPDATE CASCADE") describe future behavior, not statements.
+    const statements = membersMigration().replace(/\bON (DELETE|UPDATE) (CASCADE|SET NULL|RESTRICT|NO ACTION)\b/g, "");
+    expect(statements).not.toMatch(/\b(DROP|DELETE|TRUNCATE|UPDATE|RENAME)\b/i);
   });
 });
