@@ -2,7 +2,7 @@
 
 A minimal Kanban task board. Users sign up, group work into projects, and move tasks through **To Do → In Progress → Done**. Built for CS6983 Project 2 as a pair project by Haomiao Shi and Tyler Sarna; from Sprint 2 Haomiao continued it solo with the instructor's approval.
 
-**Live app:** https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app (register, then log in) · **API docs:** [/api/docs](https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/docs) · **Health:** [/api/v1/health](https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/v1/health)
+**Live app:** https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app (register, then log in) · **API docs:** [/api/docs](https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/docs) · **Health:** [/api/v1/health](https://team-task-board-copilot-stonehaomiaoshi-8972.vercel.app/api/v1/health) · **Demo video:** [YouTube](https://youtu.be/kzmJCpCMh-s)
 
 ![Board with tasks in all three columns](docs/screenshots/board.png)
 
@@ -51,6 +51,8 @@ A minimal Kanban task board. Users sign up, group work into projects, and move t
 | Sprint 2 notes | [planning](docs/sprints/sprint-2/planning.md) · [standups](docs/sprints/sprint-2/standups.md) · [review](docs/sprints/sprint-2/review.md) · [retrospective](docs/sprints/sprint-2/retro.md) |
 | Shared rules for humans and AI | [AGENTS.md](AGENTS.md) |
 | AI-assisted development workflow | [docs/ai-workflow.md](docs/ai-workflow.md) |
+| Demo video | [YouTube](https://youtu.be/kzmJCpCMh-s) |
+| Individual reflection (Haomiao Shi) | [docs/reflection.md](docs/reflection.md) |
 | Scrum board | [GitHub Project](https://github.com/users/stone-coding/projects/3/views/2) · [Milestones](https://github.com/stone-coding/team-task-board-copilot/milestones) · [Issues](https://github.com/stone-coding/team-task-board-copilot/issues) |
 
 Development used Visual Studio Code with GitHub Copilot Chat, guided by `AGENTS.md`, and GitHub Copilot Chat for the final documentation and UI polish; see [docs/ai-workflow.md](docs/ai-workflow.md).
