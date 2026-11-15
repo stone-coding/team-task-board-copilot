@@ -6,6 +6,9 @@ info:
     All `/api/v1` endpoints except register, login, logout, and health require a session:
     the `session` cookie set by login, or `Authorization: Bearer <token>`.
     Interactive docs: `/api/docs`; this file is served at `/api/docs/openapi.yaml`.
+    Access is by project membership: the OWNER and MEMBERs of a project can read it and work on its tasks;
+    only the OWNER can delete it or manage members (403 for a MEMBER). A project, task, or member the caller
+    cannot reach returns 404, never 403, so ids reveal nothing to nonmembers.
 servers:
   - url: /api/v1
 components:
@@ -20,13 +23,25 @@ components:
         id: { type: string }
         email: { type: string, format: email }
         name: { type: string }
+    ProjectRole:
+      type: string
+      enum: [OWNER, MEMBER]
     Project:
       type: object
-      required: [id, name, createdAt]
+      required: [id, name, createdAt, role]
       properties:
         id: { type: string }
         name: { type: string, minLength: 1, maxLength: 80 }
         createdAt: { type: string, format: date-time }
+        role: { $ref: "#/components/schemas/ProjectRole", description: The caller's role in the project }
+    ProjectMember:
+      type: object
+      required: [userId, name, email, role]
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/ProjectRole" }
     TaskStatus:
       type: string
       enum: [TODO, IN_PROGRESS, DONE]
@@ -66,10 +81,13 @@ components:
       description: No valid session (code `UNAUTHENTICATED`).
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
     ProjectNotFound:
-      description: No project with this id owned by the caller (code `NOT_FOUND`). Another user's project also returns 404.
+      description: No project with this id that the caller is a member of (code `NOT_FOUND`). A project the caller does not belong to also returns 404.
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
     TaskNotFound:
-      description: No task with this id in a project owned by the caller (code `NOT_FOUND`). Another user's task also returns 404.
+      description: No task with this id in a project the caller is a member of (code `NOT_FOUND`). Tasks in other projects also return 404.
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+    OwnerOnly:
+      description: The caller is a MEMBER, and only the project OWNER may do this (code `FORBIDDEN`).
       content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
     InternalError:
       description: Unexpected server error, for example the database is unavailable (code `INTERNAL_ERROR`, generic message).
@@ -77,6 +95,11 @@ components:
   parameters:
     ProjectId:
       name: projectId
+      in: path
+      required: true
+      schema: { type: string }
+    UserId:
+      name: userId
       in: path
       required: true
       schema: { type: string }
@@ -171,7 +194,7 @@ paths:
   /projects:
     get:
       operationId: listProjects
-      summary: List your projects
+      summary: List the projects you are a member of, with your role
       description: Only the caller's projects, newest first.
       responses:
         "200":
@@ -187,7 +210,7 @@ paths:
         "500": { $ref: "#/components/responses/InternalError" }
     post:
       operationId: createProject
-      summary: Create a project
+      summary: Create a project (you become its OWNER)
       description: The caller becomes the owner; any `ownerId` in the body is ignored. A valid token whose user was deleted gets 401.
       requestBody:
         required: true
@@ -212,7 +235,7 @@ paths:
       - $ref: "#/components/parameters/ProjectId"
     get:
       operationId: getProject
-      summary: Get one of your projects
+      summary: Get a project you are a member of, with your role
       responses:
         "200":
           description: The project.
@@ -224,12 +247,80 @@ paths:
         "500": { $ref: "#/components/responses/InternalError" }
     delete:
       operationId: deleteProject
-      summary: Delete one of your projects
-      description: Also deletes all of the project's tasks.
+      summary: Delete a project you own
+      description: OWNER only. Also deletes all of the project's tasks and memberships.
       responses:
-        "204": { description: Project and its tasks deleted. }
+        "204": { description: Project, its tasks, and its memberships deleted. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/OwnerOnly" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /projects/{projectId}/members:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listMembers
+      summary: List the project's members, owner first
+      responses:
+        "200":
+          description: The members.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [members]
+                properties:
+                  members: { type: array, items: { $ref: "#/components/schemas/ProjectMember" } }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/ProjectNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      operationId: addMember
+      summary: Add an existing user to the project by email
+      description: OWNER only. The email is trimmed and lowercased; the user must already have an account. No email is sent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "201":
+          description: Member added with the MEMBER role.
+          content:
+            application/json:
+              schema: { type: object, required: [member], properties: { member: { $ref: "#/components/schemas/ProjectMember" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/OwnerOnly" }
+        "404":
+          description: The caller is not a member (`Project not found`), or no account uses this email (`No account uses this email`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "409":
+          description: The user is already a member (code `CONFLICT`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /projects/{projectId}/members/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+      - $ref: "#/components/parameters/UserId"
+    delete:
+      operationId: removeMember
+      summary: Remove a member, or leave the project
+      description: The OWNER can remove any MEMBER; a MEMBER can remove only themselves (leave). Access is revoked on the next request.
+      responses:
+        "204": { description: Membership removed. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/OwnerOnly" }
+        "404":
+          description: The caller is not a member (`Project not found`), or the user is not a member (`Member not found`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "409":
+          description: The OWNER cannot be removed (code `CONFLICT`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
         "500": { $ref: "#/components/responses/InternalError" }
   /projects/{projectId}/tasks:
     parameters:

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAuthenticatedUserId } from "@/server/auth/session";
-import { notFoundError, unauthenticated, withErrorHandling } from "@/server/http";
+import { forbiddenError, notFoundError, unauthenticated, withErrorHandling } from "@/server/http";
 import { deleteProject, findProject } from "@/server/services/projects";
 
 type Context = RouteContext<"/api/v1/projects/[projectId]">;
@@ -28,8 +28,12 @@ export const DELETE = withErrorHandling(async (request: NextRequest, context: Co
   }
 
   const { projectId } = await context.params;
-  if (!(await deleteProject(userId, projectId))) {
+  const result = await deleteProject(userId, projectId);
+  if (result === "not_found") {
     return notFoundError(PROJECT_NOT_FOUND);
+  }
+  if (result === "forbidden") {
+    return forbiddenError("Only the project owner can delete the project");
   }
   return new NextResponse(null, { status: 204 });
 });

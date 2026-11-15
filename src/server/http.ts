@@ -14,6 +14,14 @@ export function notFoundError(message: string) {
   return jsonError(404, "NOT_FOUND", message);
 }
 
+export function forbiddenError(message: string) {
+  return jsonError(403, "FORBIDDEN", message);
+}
+
+export function conflictError(message: string) {
+  return jsonError(409, "CONFLICT", message);
+}
+
 /**
  * Wraps a route handler so unexpected failures (for example, the database being down) return a generic 500
  * in the standard error shape instead of leaking details. The error is logged server-side only.

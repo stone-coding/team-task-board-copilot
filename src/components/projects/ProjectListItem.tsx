@@ -68,10 +68,10 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
                 {project.name}
               </Link>
             </h3>
-            <p className="text-xs text-zinc-600">Open the board</p>
+            <p className="text-xs text-zinc-600">{project.role === "MEMBER" ? "Shared with you" : "Open the board"}</p>
           </div>
         </div>
-        {confirming ? null : (
+        {confirming || project.role !== "OWNER" ? null : (
           <button ref={deleteRef} type="button" onClick={() => toggleConfirming(true)} aria-label={`Delete ${project.name}`} className={GHOST_BUTTON}>
             Delete
           </button>
