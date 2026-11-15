@@ -6,6 +6,8 @@ import type { Task, TaskStatus } from "@/lib/tasks";
 type BoardColumnProps = {
   status: TaskStatus;
   tasks: Task[];
+  /** Shown when the column has no cards: "No tasks yet", or "No matching tasks" while filtering. */
+  emptyMessage: string;
   onStatusChange: (taskId: string, status: TaskStatus) => void;
   onTaskSaved: (task: Task) => void;
   onTaskDeleted: (taskId: string) => void;
@@ -17,7 +19,7 @@ const ACCENT_CLASSES: Record<TaskStatus, { border: string; dot: string }> = {
   DONE: { border: "border-t-green-600", dot: "bg-green-600" },
 };
 
-export function BoardColumn({ status, tasks, onStatusChange, onTaskSaved, onTaskDeleted }: BoardColumnProps) {
+export function BoardColumn({ status, tasks, emptyMessage, onStatusChange, onTaskSaved, onTaskDeleted }: BoardColumnProps) {
   const headingId = useId();
   const accent = ACCENT_CLASSES[status];
 
@@ -46,7 +48,7 @@ export function BoardColumn({ status, tasks, onStatusChange, onTaskSaved, onTask
         </ul>
       ) : (
         <div className="rounded-lg border border-dashed border-zinc-400 px-3 py-6 text-center">
-          <p className="text-sm text-zinc-600">No tasks yet</p>
+          <p className="text-sm text-zinc-600">{emptyMessage}</p>
         </div>
       )}
     </section>
