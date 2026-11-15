@@ -1,6 +1,7 @@
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/task-schemas";
 import type { Task, TaskPriority, TaskStatus } from "@/lib/tasks";
 import { prisma } from "@/server/db";
+import { recordActivity } from "@/server/services/activity";
 import { getRole, memberOf } from "@/server/services/memberships";
 
 const TASK_SELECT = {
@@ -77,32 +78,59 @@ export async function createTask(userId: string, projectId: string, input: Creat
     return null;
   }
   await assertAssignable(projectId, input.assigneeId);
-  const row = await prisma.task.create({
-    data: { projectId, title: input.title, description: input.description, priority: input.priority, assigneeId: input.assigneeId },
-    select: TASK_SELECT,
+  return prisma.$transaction(async (tx) => {
+    const row = await tx.task.create({
+      data: { projectId, title: input.title, description: input.description, priority: input.priority, assigneeId: input.assigneeId },
+      select: TASK_SELECT,
+    });
+    const event = { projectId, actorId: userId, taskId: row.id, taskTitle: row.title };
+    await recordActivity(tx, { ...event, type: "TASK_CREATED" });
+    if (row.assignee) {
+      await recordActivity(tx, { ...event, type: "TASK_ASSIGNED", subjectName: row.assignee.name });
+    }
+    return toTask(row);
   });
-  return toTask(row);
 }
 
-/** Returns null when no such task is in a project the caller belongs to; access is checked before the assignee. */
+/**
+ * Returns null when no such task is in a project the caller belongs to; access is checked before the assignee.
+ * The change and its activity events (moved, assigned, edited) are written in one transaction.
+ */
 export async function updateTask(userId: string, taskId: string, input: UpdateTaskInput): Promise<Task | null> {
-  if (input.assigneeId !== undefined) {
-    const task = await prisma.task.findFirst({ where: memberTask(userId, taskId), select: { projectId: true } });
-    if (!task) {
+  return prisma.$transaction(async (tx) => {
+    const before = await tx.task.findFirst({ where: memberTask(userId, taskId), select: TASK_SELECT });
+    if (!before) {
       return null;
     }
-    await assertAssignable(task.projectId, input.assigneeId);
-  }
-  const { count } = await prisma.task.updateMany({ where: memberTask(userId, taskId), data: input });
-  if (count === 0) {
-    return null;
-  }
-  const row = await prisma.task.findUnique({ where: { id: taskId }, select: TASK_SELECT });
-  return row ? toTask(row) : null;
+    if (input.assigneeId !== undefined) {
+      await assertAssignable(before.projectId, input.assigneeId);
+    }
+    await tx.task.update({ where: { id: taskId }, data: input });
+    const after = await tx.task.findUniqueOrThrow({ where: { id: taskId }, select: TASK_SELECT });
+
+    const event = { projectId: after.projectId, actorId: userId, taskId, taskTitle: after.title };
+    if (before.status !== after.status) {
+      await recordActivity(tx, { ...event, type: "TASK_MOVED", fromStatus: before.status, toStatus: after.status });
+    }
+    if (before.assignee?.id !== after.assignee?.id) {
+      await recordActivity(tx, { ...event, type: "TASK_ASSIGNED", subjectName: after.assignee?.name });
+    }
+    if (before.title !== after.title || before.description !== after.description || before.priority !== after.priority) {
+      await recordActivity(tx, { ...event, type: "TASK_UPDATED" });
+    }
+    return toTask(after);
+  });
 }
 
 /** Returns false when no such task is in a project the caller belongs to. */
 export async function deleteTask(userId: string, taskId: string): Promise<boolean> {
-  const { count } = await prisma.task.deleteMany({ where: memberTask(userId, taskId) });
-  return count > 0;
+  return prisma.$transaction(async (tx) => {
+    const task = await tx.task.findFirst({ where: memberTask(userId, taskId), select: { projectId: true, title: true } });
+    if (!task) {
+      return false;
+    }
+    await tx.task.delete({ where: { id: taskId } });
+    await recordActivity(tx, { projectId: task.projectId, actorId: userId, type: "TASK_DELETED", taskId, taskTitle: task.title });
+    return true;
+  });
 }

@@ -19,7 +19,7 @@ flowchart TD
   DB -->|"@prisma/adapter-pg"| PG[("PostgreSQL")]
 ```
 
-Server components read their initial data by calling the same services directly, with the user id from `getCurrentUserId()` (`src/server/auth/current-user.ts`). Client components change data only through `/api/v1`: the projects page then calls `router.refresh()` to re-render, and the board updates its own state from the API response (see *Board state*). Each service function takes the caller's user id and checks membership in the project (`getRole` in `src/server/services/memberships.ts`, a `ProjectMember` lookup) before reading or writing, so a project, task, or member the caller does not belong to looks exactly like a missing one (404). OWNER-only actions (deleting a project, adding or removing members) return 403 to a MEMBER. Removing a membership revokes access on the next request, because nothing is cached in the JWT except the user id. Route handlers are wrapped in `withErrorHandling` (`src/server/http.ts`), which logs unexpected errors on the server and returns a generic `500 INTERNAL_ERROR`.
+Server components read their initial data by calling the same services directly, with the user id from `getCurrentUserId()` (`src/server/auth/current-user.ts`). Client components change data only through `/api/v1`: the projects page then calls `router.refresh()` to re-render, and the board updates its own state from the API response (see *Board state*). Each service function takes the caller's user id and checks membership in the project (`getRole` in `src/server/services/memberships.ts`, a `ProjectMember` lookup) before reading or writing, so a project, task, or member the caller does not belong to looks exactly like a missing one (404). OWNER-only actions (deleting a project, adding or removing members) return 403 to a MEMBER. Removing a membership revokes access on the next request, because nothing is cached in the JWT except the user id. Every task, comment, and membership change runs in an interactive Prisma transaction that also writes its `Activity` row (`recordActivity(tx, …)` in `src/server/services/activity.ts`), so a change and its activity event commit or roll back together. Route handlers are wrapped in `withErrorHandling` (`src/server/http.ts`), which logs unexpected errors on the server and returns a generic `500 INTERNAL_ERROR`.
 
 `src/server/db.ts` builds one `PrismaClient` with the `PrismaPg` driver adapter from `DATABASE_URL`, cached on `globalThis` outside production so Next.js hot reload does not open new connection pools.
 
@@ -74,6 +74,8 @@ erDiagram
   User ||--o{ ProjectMember : "belongs to"
   User |o--o{ Task : "is assigned"
   Task ||--o{ Comment : has
+  Project ||--o{ Activity : records
+  User ||--o{ Activity : performs
   User ||--o{ Comment : writes
 
   User {
@@ -111,6 +113,18 @@ erDiagram
     String taskId FK "on delete cascade"
     String authorId FK "on delete cascade"
     String body "1-1000 characters"
+    DateTime createdAt
+  }
+  Activity {
+    String id PK "cuid"
+    String projectId FK "on delete cascade"
+    String actorId FK "on delete cascade"
+    ActivityType type "task, comment, or membership event"
+    String taskId "nullable, copied (not a foreign key)"
+    String taskTitle "nullable, copied"
+    TaskStatus fromStatus "nullable"
+    TaskStatus toStatus "nullable"
+    String subjectName "nullable: assignee or member"
     DateTime createdAt
   }
 ```

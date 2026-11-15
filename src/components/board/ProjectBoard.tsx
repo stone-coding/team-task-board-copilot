@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Board } from "@/components/board/Board";
 import { FOCUS_RING } from "@/components/ui/button-styles";
 import { getCurrentUserId } from "@/server/auth/current-user";
+import { ActivityFeed } from "@/components/board/ActivityFeed";
 import { MembersPanel } from "@/components/projects/MembersPanel";
+import { listActivity } from "@/server/services/activity";
 import { listMembers } from "@/server/services/members";
 import { findProject } from "@/server/services/projects";
 import { listTasks } from "@/server/services/tasks";
@@ -20,12 +22,13 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
   }
 
   // Same membership-scoped services as the API: a project the user does not belong to is not found.
-  const [project, tasks, members] = await Promise.all([
+  const [project, tasks, members, activity] = await Promise.all([
     findProject(userId, projectId),
     listTasks(userId, projectId),
     listMembers(userId, projectId),
+    listActivity(userId, projectId),
   ]);
-  if (!project || !tasks || !members) {
+  if (!project || !tasks || !members || !activity) {
     notFound();
   }
 
@@ -53,6 +56,7 @@ export async function ProjectBoard({ params }: ProjectBoardProps) {
         currentUserId={userId}
         canModerate={project.role === "OWNER"}
       />
+      <ActivityFeed items={activity} />
     </main>
   );
 }

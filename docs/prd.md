@@ -67,6 +67,11 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 - [x] The author can delete their own comment; the project owner can delete any comment; other members cannot (403).
 - [x] Nonmembers cannot read, add, or delete comments, even with a direct task or comment id (404); deleting a task deletes its comments.
 
+**US9. Activity feed** (added after Sprint 2, #55)
+- [x] The board shows the project's 50 newest events, newest first, each with who did it and when: task created, edited, moved, assigned or unassigned, deleted; comment added or deleted; member added, removed, or left.
+- [x] Each event is saved in the same transaction as its change, so the feed never shows a change that did not happen (or misses one that did).
+- [x] Only members can read the feed (404 otherwise); Refresh loads new events.
+
 ## 4. Design reference
 
 - Mockup: [`docs/mockups/board.png`](mockups/board.png) (1280px) and [`docs/mockups/board-mobile.png`](mockups/board-mobile.png) (375px). The source is [`docs/mockups/board.html`](mockups/board.html).
@@ -75,7 +80,7 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 
 ## 5. MVP scope
 
-**In scope:** US1–US5, plus US6 (shared projects and roles), US7 (task assignment), and US8 (task comments), added after Sprint 2.
+**In scope:** US1–US5, plus US6 (shared projects and roles), US7 (task assignment), US8 (task comments), and US9 (activity feed), added after Sprint 2.
 
 **Explicitly out of scope:** drag-and-drop, real-time sync or WebSockets (collaboration is refresh-based), notifications, email invitations (members are added by the email of an existing account), due dates, file attachments, OAuth providers, mobile apps.
 
@@ -89,6 +94,9 @@ ProjectMember (projectId → Project, userId → User, role OWNER|MEMBER default
         access to a project and its tasks comes only from this table
 Comment (id, taskId → Task, authorId → User, body 1–1000 chars, createdAt)
         index (taskId, createdAt), both on delete cascade (#53)
+Activity (id, projectId → Project, actorId → User, type ActivityType, taskId?, taskTitle?,
+          fromStatus?, toStatus?, subjectName?, createdAt)
+        index (projectId, createdAt), both on delete cascade; written in the same transaction as each change (#55)
 Task    (id, projectId → Project, title, description?, status TODO|IN_PROGRESS|DONE,
          priority LOW|MEDIUM|HIGH default MEDIUM (#47),
          assigneeId? → User on delete set null (#51),
