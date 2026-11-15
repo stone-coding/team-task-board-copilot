@@ -46,11 +46,17 @@ export function AddTaskForm({ projectId, onCreated }: AddTaskFormProps) {
 
   // noValidate: validation runs in readTaskFields so its message is announced through FormError.
   return (
-    <form aria-label="Add task" noValidate onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-3">
+    <form
+      aria-label="Add task"
+      noValidate
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
+    >
+      <p className="text-sm font-semibold text-zinc-900">New task</p>
       <FormError message={error} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto] md:items-end">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto] md:items-start">
         <TaskFields />
-        <div>
+        <div className="md:self-end">
           <SubmitButton label="Add task" pending={pending} />
         </div>
       </div>

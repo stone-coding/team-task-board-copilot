@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { DANGER_BUTTON, FOCUS_RING, GHOST_BUTTON, SECONDARY_BUTTON } from "@/components/ui/button-styles";
 import { FormError } from "@/components/ui/FormError";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
 import type { Project } from "@/lib/projects";
@@ -11,8 +12,6 @@ type ProjectListItemProps = {
   project: Project;
 };
 
-const FOCUS_RING = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-const SECONDARY_BUTTON = `rounded-md border border-zinc-400 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-50 ${FOCUS_RING}`;
 
 export function ProjectListItem({ project }: ProjectListItemProps) {
   const router = useRouter();
@@ -54,28 +53,39 @@ export function ProjectListItem({ project }: ProjectListItemProps) {
   }
 
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="min-w-0 text-sm font-semibold break-words">
-          <Link href={`/projects/${project.id}`} className={`text-blue-700 underline ${FOCUS_RING}`}>
-            {project.name}
-          </Link>
-        </h3>
+    <li className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm font-semibold text-blue-700"
+          >
+            {project.name.trim().charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold break-words text-zinc-900">
+              <Link href={`/projects/${project.id}`} className={`rounded hover:underline ${FOCUS_RING}`}>
+                {project.name}
+              </Link>
+            </h3>
+            <p className="text-xs text-zinc-600">Open the board</p>
+          </div>
+        </div>
         {confirming ? null : (
-          <button ref={deleteRef} type="button" onClick={() => toggleConfirming(true)} aria-label={`Delete ${project.name}`} className={SECONDARY_BUTTON}>
+          <button ref={deleteRef} type="button" onClick={() => toggleConfirming(true)} aria-label={`Delete ${project.name}`} className={GHOST_BUTTON}>
             Delete
           </button>
         )}
       </div>
       {confirming ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm text-zinc-900">Delete this project and all its tasks?</p>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="w-full text-sm text-zinc-900">Delete this project and all its tasks?</p>
           <button
             type="button"
             onClick={handleConfirm}
             disabled={pending}
             aria-label={`Confirm delete ${project.name}`}
-            className={`rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60 ${FOCUS_RING}`}
+            className={DANGER_BUTTON}
           >
             Confirm delete
           </button>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { TEXT_LINK } from "@/components/ui/button-styles";
 import { FormError } from "@/components/ui/FormError";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { TextField } from "@/components/ui/TextField";
@@ -40,7 +41,7 @@ export function LoginForm({ nextPath, registered }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {registered ? (
-        <p role="status" className="rounded-md border border-green-700 bg-green-50 px-3 py-2 text-sm text-green-800">
+        <p role="status" className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
           Account created. Log in to continue.
         </p>
       ) : null}
@@ -50,7 +51,7 @@ export function LoginForm({ nextPath, registered }: LoginFormProps) {
       <SubmitButton label="Log in" pending={pending} />
       <p className="text-sm text-zinc-600">
         No account?{" "}
-        <Link href="/register" className="font-medium text-blue-700 underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+        <Link href="/register" className={TEXT_LINK}>
           Create one
         </Link>
       </p>

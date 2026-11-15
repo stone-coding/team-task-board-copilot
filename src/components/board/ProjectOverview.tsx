@@ -11,7 +11,7 @@ type StatProps = {
 
 function Stat({ label, value }: StatProps) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+    <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
       <dt className="text-xs font-medium text-zinc-600">{label}</dt>
       <dd className="mt-1 text-2xl font-semibold tabular-nums text-zinc-900">{value}</dd>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { GHOST_BUTTON } from "@/components/ui/button-styles";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -12,11 +13,7 @@ export function LogoutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="self-start rounded-md border border-zinc-400 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-    >
+    <button type="button" onClick={handleClick} className={`${GHOST_BUTTON} shrink-0`}>
       Log out
     </button>
   );

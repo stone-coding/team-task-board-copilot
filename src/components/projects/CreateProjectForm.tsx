@@ -38,7 +38,15 @@ export function CreateProjectForm() {
   }
 
   return (
-    <form aria-label="New project" onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form
+      aria-label="New project"
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm lg:sticky lg:top-20"
+    >
+      <div>
+        <p className="text-sm font-semibold text-zinc-900">New project</p>
+        <p className="mt-0.5 text-xs text-zinc-600">Only you can see the projects you create.</p>
+      </div>
       <FormError message={error} />
       <TextField
         label="Project name"

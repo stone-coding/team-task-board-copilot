@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { TaskDeleteConfirm } from "@/components/board/TaskDeleteConfirm";
 import { TaskEditForm } from "@/components/board/TaskEditForm";
-import { SECONDARY_BUTTON } from "@/components/ui/button-styles";
+import { FOCUS_RING, GHOST_BUTTON } from "@/components/ui/button-styles";
 import { STATUS_LABELS, TASK_STATUSES, isTaskStatus } from "@/lib/task-status";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
@@ -14,7 +14,7 @@ type TaskCardProps = {
 
 type Mode = "view" | "editing" | "confirmingDelete";
 
-const CARD = "rounded-lg border border-zinc-200 bg-white px-3 py-2.5";
+const CARD = "rounded-lg border border-zinc-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md";
 
 export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardProps) {
   const [mode, setMode] = useState<Mode>("view");
@@ -59,17 +59,17 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardP
 
   return (
     <li className={CARD}>
-      <h3 className="text-sm font-semibold break-words">{task.title}</h3>
-      {task.description ? <p className="mt-1 text-sm break-words text-zinc-600">{task.description}</p> : null}
+      <h3 className="text-sm font-medium break-words text-zinc-900">{task.title}</h3>
+      {task.description ? <p className="mt-1 text-sm leading-relaxed break-words text-zinc-600">{task.description}</p> : null}
       {mode === "confirmingDelete" ? (
         <TaskDeleteConfirm task={task} onDeleted={onDeleted} onCancel={() => backToView("delete")} />
       ) : (
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-2.5">
           <label className="flex items-center gap-2 text-xs text-zinc-600">
             <span aria-hidden="true">Status</span>
             <select
               aria-label={`Status for ${task.title}`}
-              className="rounded-md border border-zinc-400 bg-white px-2 py-1 text-sm text-zinc-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className={`rounded-md border border-zinc-400 bg-white px-2 py-1 text-xs font-medium text-zinc-900 ${FOCUS_RING}`}
               value={task.status}
               onChange={handleStatusChange}
             >
@@ -80,11 +80,11 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardP
               ))}
             </select>
           </label>
-          <div className="flex gap-2">
-            <button ref={editRef} type="button" onClick={() => setMode("editing")} aria-label={`Edit ${task.title}`} className={SECONDARY_BUTTON}>
+          <div className="flex gap-1">
+            <button ref={editRef} type="button" onClick={() => setMode("editing")} aria-label={`Edit ${task.title}`} className={GHOST_BUTTON}>
               Edit
             </button>
-            <button ref={deleteRef} type="button" onClick={() => setMode("confirmingDelete")} aria-label={`Delete ${task.title}`} className={SECONDARY_BUTTON}>
+            <button ref={deleteRef} type="button" onClick={() => setMode("confirmingDelete")} aria-label={`Delete ${task.title}`} className={`${GHOST_BUTTON} hover:bg-red-50 hover:text-red-800`}>
               Delete
             </button>
           </div>
