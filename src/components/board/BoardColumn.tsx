@@ -13,6 +13,8 @@ type BoardColumnProps = {
   onTaskSaved: (task: Task) => void;
   onTaskDeleted: (taskId: string) => void;
   members?: ProjectMemberInfo[];
+  currentUserId?: string;
+  canModerate?: boolean;
 };
 
 const ACCENT_CLASSES: Record<TaskStatus, { border: string; dot: string }> = {
@@ -21,7 +23,17 @@ const ACCENT_CLASSES: Record<TaskStatus, { border: string; dot: string }> = {
   DONE: { border: "border-t-green-600", dot: "bg-green-600" },
 };
 
-export function BoardColumn({ status, tasks, emptyMessage, onStatusChange, onTaskSaved, onTaskDeleted, members }: BoardColumnProps) {
+export function BoardColumn({
+  status,
+  tasks,
+  emptyMessage,
+  onStatusChange,
+  onTaskSaved,
+  onTaskDeleted,
+  members,
+  currentUserId,
+  canModerate,
+}: BoardColumnProps) {
   const headingId = useId();
   const accent = ACCENT_CLASSES[status];
 
@@ -45,7 +57,16 @@ export function BoardColumn({ status, tasks, emptyMessage, onStatusChange, onTas
       {tasks.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} members={members} onStatusChange={onStatusChange} onSaved={onTaskSaved} onDeleted={onTaskDeleted} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              members={members}
+              currentUserId={currentUserId}
+              canModerate={canModerate}
+              onStatusChange={onStatusChange}
+              onSaved={onTaskSaved}
+              onDeleted={onTaskDeleted}
+            />
           ))}
         </ul>
       ) : (

@@ -62,6 +62,11 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 - [x] The board can be filtered by assignee (including "Unassigned"), combined with search, status, and priority.
 - [x] When a member is removed or leaves, their tasks in that project become unassigned.
 
+**US8. Task comments** (added after Sprint 2, #53)
+- [x] Members open a task's comments from its card, read them oldest first with author and time, and add a comment (1–1000 characters).
+- [x] The author can delete their own comment; the project owner can delete any comment; other members cannot (403).
+- [x] Nonmembers cannot read, add, or delete comments, even with a direct task or comment id (404); deleting a task deletes its comments.
+
 ## 4. Design reference
 
 - Mockup: [`docs/mockups/board.png`](mockups/board.png) (1280px) and [`docs/mockups/board-mobile.png`](mockups/board-mobile.png) (375px). The source is [`docs/mockups/board.html`](mockups/board.html).
@@ -70,7 +75,7 @@ Small teams lose track of who is doing what when tasks live in chat threads and 
 
 ## 5. MVP scope
 
-**In scope:** US1–US5, plus US6 (shared projects and roles) and US7 (task assignment), added after Sprint 2.
+**In scope:** US1–US5, plus US6 (shared projects and roles), US7 (task assignment), and US8 (task comments), added after Sprint 2.
 
 **Explicitly out of scope:** drag-and-drop, real-time sync or WebSockets (collaboration is refresh-based), notifications, email invitations (members are added by the email of an existing account), due dates, file attachments, OAuth providers, mobile apps.
 
@@ -82,6 +87,8 @@ Project (id, name, ownerId → User (creator), createdAt)       on delete cascad
 ProjectMember (projectId → Project, userId → User, role OWNER|MEMBER default MEMBER, createdAt)
         primary key (projectId, userId), index (userId), both on delete cascade (#49)
         access to a project and its tasks comes only from this table
+Comment (id, taskId → Task, authorId → User, body 1–1000 chars, createdAt)
+        index (taskId, createdAt), both on delete cascade (#53)
 Task    (id, projectId → Project, title, description?, status TODO|IN_PROGRESS|DONE,
          priority LOW|MEDIUM|HIGH default MEDIUM (#47),
          assigneeId? → User on delete set null (#51),

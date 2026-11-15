@@ -73,6 +73,8 @@ erDiagram
   Project ||--o{ ProjectMember : "has members"
   User ||--o{ ProjectMember : "belongs to"
   User |o--o{ Task : "is assigned"
+  Task ||--o{ Comment : has
+  User ||--o{ Comment : writes
 
   User {
     String id PK "cuid"
@@ -103,6 +105,13 @@ erDiagram
     String assigneeId FK "nullable, a project member; on delete set null"
     DateTime createdAt
     DateTime updatedAt
+  }
+  Comment {
+    String id PK "cuid"
+    String taskId FK "on delete cascade"
+    String authorId FK "on delete cascade"
+    String body "1-1000 characters"
+    DateTime createdAt
   }
 ```
 

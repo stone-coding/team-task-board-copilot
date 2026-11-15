@@ -22,6 +22,34 @@ function renderCard(overrides: { onSaved?: (task: Task) => void; onDeleted?: (ta
   return props;
 }
 
+describe("TaskCard comments", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("has no Comments toggle without a signed-in viewer", () => {
+    renderCard();
+    expect(screen.queryByRole("button", { name: "Comments for Write release notes" })).not.toBeInTheDocument();
+  });
+
+  it("opens and closes the comment thread", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ comments: [] }), { status: 200 })));
+    render(
+      <ul>
+        <TaskCard task={task} currentUserId="u1" canModerate onStatusChange={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} />
+      </ul>,
+    );
+    const user = userEvent.setup();
+    const toggle = screen.getByRole("button", { name: "Comments for Write release notes" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(await screen.findByRole("region", { name: "Comments on Write release notes" })).toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(screen.queryByRole("region", { name: "Comments on Write release notes" })).not.toBeInTheDocument();
+  });
+});
+
 describe("TaskCard assignee", () => {
   afterEach(() => vi.unstubAllGlobals());
 

@@ -65,6 +65,20 @@ components:
           properties:
             userId: { type: string }
             name: { type: string }
+    Comment:
+      type: object
+      required: [id, taskId, body, createdAt, author]
+      properties:
+        id: { type: string }
+        taskId: { type: string }
+        body: { type: string, minLength: 1, maxLength: 1000 }
+        createdAt: { type: string, format: date-time }
+        author:
+          type: object
+          required: [userId, name]
+          properties:
+            userId: { type: string }
+            name: { type: string }
     TaskResponse:
       type: object
       required: [task]
@@ -107,6 +121,11 @@ components:
       schema: { type: string }
     UserId:
       name: userId
+      in: path
+      required: true
+      schema: { type: string }
+    CommentId:
+      name: commentId
       in: path
       required: true
       schema: { type: string }
@@ -422,6 +441,65 @@ paths:
         "204": { description: Task deleted. }
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "404": { $ref: "#/components/responses/TaskNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /tasks/{taskId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      operationId: listComments
+      summary: List a task's comments, oldest first
+      responses:
+        "200":
+          description: The comments.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [comments]
+                properties:
+                  comments: { type: array, items: { $ref: "#/components/schemas/Comment" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+    post:
+      operationId: addComment
+      summary: Comment on a task
+      description: Any project member. The body is trimmed and must be 1–1000 characters. Access is checked before validation, so a nonmember always gets 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 1000 }
+      responses:
+        "201":
+          description: Comment created; the caller is the author.
+          content:
+            application/json:
+              schema: { type: object, required: [comment], properties: { comment: { $ref: "#/components/schemas/Comment" } } }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /comments/{commentId}:
+    parameters:
+      - $ref: "#/components/parameters/CommentId"
+    delete:
+      operationId: deleteComment
+      summary: Delete a comment
+      description: The author may delete their own comment; the project OWNER may delete any comment in the project.
+      responses:
+        "204": { description: Comment deleted. }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403":
+          description: The caller is a member but neither the author nor the OWNER (code `FORBIDDEN`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "404":
+          description: No such comment in a project the caller belongs to (code `NOT_FOUND`).
+          content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
         "500": { $ref: "#/components/responses/InternalError" }
   /health:
     get:
