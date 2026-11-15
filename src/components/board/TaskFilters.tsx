@@ -1,6 +1,7 @@
 import { useId, type ChangeEvent } from "react";
 import { FOCUS_RING, INPUT, SECONDARY_BUTTON } from "@/components/ui/button-styles";
-import { EMPTY_FILTERS, hasActiveFilters, isStatusFilter, type TaskFilterValues } from "@/lib/task-filters";
+import { EMPTY_FILTERS, hasActiveFilters, isPriorityFilter, isStatusFilter, type TaskFilterValues } from "@/lib/task-filters";
+import { PRIORITIES_HIGH_FIRST, PRIORITY_LABELS } from "@/lib/task-priority";
 import { STATUS_LABELS, TASK_STATUSES } from "@/lib/task-status";
 
 type TaskFiltersProps = {
@@ -14,12 +15,20 @@ type TaskFiltersProps = {
 export function TaskFilters({ filters, onChange, shown, total }: TaskFiltersProps) {
   const searchId = useId();
   const statusId = useId();
+  const priorityId = useId();
   const active = hasActiveFilters(filters);
 
   function handleStatusChange(event: ChangeEvent<HTMLSelectElement>) {
     const { value } = event.target;
     if (isStatusFilter(value)) {
       onChange({ ...filters, status: value });
+    }
+  }
+
+  function handlePriorityChange(event: ChangeEvent<HTMLSelectElement>) {
+    const { value } = event.target;
+    if (isPriorityFilter(value)) {
+      onChange({ ...filters, priority: value });
     }
   }
 
@@ -54,6 +63,24 @@ export function TaskFilters({ filters, onChange, shown, total }: TaskFiltersProp
             {TASK_STATUSES.map((status) => (
               <option key={status} value={status}>
                 {STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5 sm:w-44">
+          <label htmlFor={priorityId} className="text-sm font-medium text-zinc-900">
+            Filter by priority
+          </label>
+          <select
+            id={priorityId}
+            value={filters.priority}
+            onChange={handlePriorityChange}
+            className={`rounded-lg border border-zinc-400 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm ${FOCUS_RING}`}
+          >
+            <option value="ALL">All priorities</option>
+            {PRIORITIES_HIGH_FIRST.map((priority) => (
+              <option key={priority} value={priority}>
+                {PRIORITY_LABELS[priority]}
               </option>
             ))}
           </select>

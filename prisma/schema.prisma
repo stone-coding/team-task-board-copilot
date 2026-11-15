@@ -13,6 +13,12 @@ enum TaskStatus {
   DONE
 }
 
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
@@ -32,14 +38,15 @@ model Project {
 }
 
 model Task {
-  id          String     @id @default(cuid())
+  id          String       @id @default(cuid())
   projectId   String
   title       String
   description String?
-  status      TaskStatus @default(TODO)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, status])
 }

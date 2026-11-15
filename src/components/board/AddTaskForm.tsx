@@ -54,7 +54,7 @@ export function AddTaskForm({ projectId, onCreated }: AddTaskFormProps) {
     >
       <p className="text-sm font-semibold text-zinc-900">New task</p>
       <FormError message={error} />
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto] md:items-start">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_9rem_auto] md:items-start">
         <TaskFields />
         <div className="md:self-end">
           <SubmitButton label="Add task" pending={pending} />

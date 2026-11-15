@@ -1,10 +1,17 @@
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/task-schemas";
-import type { Task, TaskStatus } from "@/lib/tasks";
+import type { Task, TaskPriority, TaskStatus } from "@/lib/tasks";
 import { prisma } from "@/server/db";
 
-const TASK_SELECT = { id: true, projectId: true, title: true, description: true, status: true } as const;
+const TASK_SELECT = { id: true, projectId: true, title: true, description: true, status: true, priority: true } as const;
 
-type TaskRow = { id: string; projectId: string; title: string; description: string | null; status: TaskStatus };
+type TaskRow = {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+};
 
 function toTask({ description, ...task }: TaskRow): Task {
   return description === null ? task : { ...task, description };
@@ -39,7 +46,7 @@ export async function createTask(ownerId: string, projectId: string, input: Crea
     return null;
   }
   const row = await prisma.task.create({
-    data: { projectId, title: input.title, description: input.description },
+    data: { projectId, title: input.title, description: input.description, priority: input.priority },
     select: TASK_SELECT,
   });
   return toTask(row);

@@ -1,10 +1,12 @@
+import { sortByPriority } from "./task-priority";
 import type { Task, TaskStatus } from "./tasks";
 
 export type TasksByStatus = Record<TaskStatus, Task[]>;
 
+/** Each column lists High, then Medium, then Low; equal priorities keep their order. */
 export function groupTasksByStatus(tasks: readonly Task[]): TasksByStatus {
   const groups: TasksByStatus = { TODO: [], IN_PROGRESS: [], DONE: [] };
-  for (const task of tasks) {
+  for (const task of sortByPriority(tasks)) {
     groups[task.status].push(task);
   }
   return groups;

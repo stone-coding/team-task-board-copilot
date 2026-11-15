@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Board } from "@/components/board/Board";
 import { mockTasks } from "@/lib/mock-tasks";
+import type { Task } from "@/lib/tasks";
 
 function column(name: string) {
   return screen.getByRole("region", { name });
@@ -197,7 +198,7 @@ describe("Board", () => {
   });
 
   it("adds a created task to To Do and updates the count", async () => {
-    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO" };
+    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO", priority: "MEDIUM" };
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ task: created }), { status: 201 })));
     const user = userEvent.setup();
     render(<Board projectId="demo" initialTasks={mockTasks} />);
@@ -266,7 +267,7 @@ describe("Board", () => {
   });
 
   it("counts added and deleted tasks in the overview", async () => {
-    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO" };
+    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO", priority: "MEDIUM" };
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ task: created }), { status: 201 })));
     const user = userEvent.setup();
     render(<Board projectId="demo" initialTasks={mockTasks} />);
@@ -381,5 +382,68 @@ describe("Board: search and filter", () => {
     expect(screen.queryByRole("heading", { name: "Write release notes" })).not.toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("Showing 2 of 5 tasks");
     await waitFor(() => expect(overviewStat("Completed")).toHaveTextContent(/^1$/));
+  });
+});
+
+describe("Board: priority", () => {
+  beforeEach(() => vi.stubGlobal("fetch", saveSucceeds()));
+  afterEach(() => vi.unstubAllGlobals());
+
+  const prioritized: Task[] = [
+    { id: "p1", projectId: "demo", title: "Tidy the backlog", status: "TODO", priority: "LOW" },
+    { id: "p2", projectId: "demo", title: "Write release notes", status: "TODO", priority: "MEDIUM" },
+    { id: "p3", projectId: "demo", title: "Fix login bug", status: "TODO", priority: "HIGH" },
+    { id: "p4", projectId: "demo", title: "Review designs", status: "IN_PROGRESS", priority: "HIGH" },
+  ];
+
+  function titlesIn(columnName: string) {
+    return within(column(columnName))
+      .getAllByRole("heading", { level: 3 })
+      .map((heading) => heading.textContent);
+  }
+
+  it("sorts each column High, then Medium, then Low", () => {
+    render(<Board projectId="demo" initialTasks={prioritized} />);
+
+    expect(titlesIn("To Do")).toEqual(["Fix login bug", "Write release notes", "Tidy the backlog"]);
+  });
+
+  it("shows a priority badge on every card", () => {
+    render(<Board projectId="demo" initialTasks={prioritized} />);
+
+    expect(within(column("To Do")).getByText("High priority")).toBeInTheDocument();
+    expect(within(column("To Do")).getByText("Medium priority")).toBeInTheDocument();
+    expect(within(column("To Do")).getByText("Low priority")).toBeInTheDocument();
+  });
+
+  it("filters by priority together with status and search", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={prioritized} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by priority" }), "High");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Fix login bug",
+      "Review designs",
+    ]);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by status" }), "In Progress");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(["Review designs"]);
+
+    await user.type(screen.getByRole("searchbox", { name: "Search tasks" }), "login");
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent("Showing 0 of 4 tasks");
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByRole("combobox", { name: "Filter by priority" })).toHaveValue("ALL");
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
+  });
+
+  it("keeps the overview counting all tasks while filtering by priority", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={prioritized} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by priority" }), "Low");
+
+    expect(overviewStat("Total tasks")).toHaveTextContent(/^4$/);
   });
 });

@@ -90,6 +90,7 @@ erDiagram
     String title
     String description "nullable"
     TaskStatus status "TODO | IN_PROGRESS | DONE, default TODO"
+    TaskPriority priority "LOW | MEDIUM | HIGH, default MEDIUM"
     DateTime createdAt
     DateTime updatedAt
   }

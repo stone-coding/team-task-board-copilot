@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { TASK_PRIORITIES } from "@/lib/task-priority";
 import { TASK_STATUSES } from "@/lib/task-status";
 
 export const TASK_TITLE_MAX_LENGTH = 120;
 export const TASK_DESCRIPTION_MAX_LENGTH = 2000;
 
 const TITLE_REQUIRED = "Task title is required";
-const NOTHING_TO_UPDATE = "Provide at least one of title, description, or status";
+const NOTHING_TO_UPDATE = "Provide at least one of title, description, status, or priority";
 
 const titleSchema = z
   .string({ error: TITLE_REQUIRED })
@@ -26,15 +27,22 @@ const descriptionSchema = z
 
 const statusSchema = z.enum(TASK_STATUSES, { error: `Status must be one of ${TASK_STATUSES.join(", ")}` });
 
+const prioritySchema = z.enum(TASK_PRIORITIES, { error: `Priority must be one of ${TASK_PRIORITIES.join(", ")}` });
+
 // New tasks always start in TODO; a status in the body is ignored.
 export const createTaskSchema = z.object(
-  { title: titleSchema, description: descriptionSchema },
+  { title: titleSchema, description: descriptionSchema, priority: prioritySchema.optional() },
   { error: TITLE_REQUIRED },
 );
 
 export const updateTaskSchema = z
   .object(
-    { title: titleSchema.optional(), description: descriptionSchema, status: statusSchema.optional() },
+    {
+      title: titleSchema.optional(),
+      description: descriptionSchema,
+      status: statusSchema.optional(),
+      priority: prioritySchema.optional(),
+    },
     { error: NOTHING_TO_UPDATE },
   )
   .refine((input) => Object.values(input).some((value) => value !== undefined), { error: NOTHING_TO_UPDATE });

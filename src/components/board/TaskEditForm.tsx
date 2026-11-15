@@ -54,7 +54,7 @@ export function TaskEditForm({ task, onSaved, onCancel }: TaskEditFormProps) {
   return (
     <form ref={formRef} aria-label={`Edit ${task.title}`} noValidate onSubmit={handleSubmit} className="flex flex-col gap-3">
       <FormError message={error} />
-      <TaskFields defaultTitle={task.title} defaultDescription={task.description} />
+      <TaskFields defaultTitle={task.title} defaultDescription={task.description} defaultPriority={task.priority} />
       <div className="flex gap-2">
         <SubmitButton label="Save" pending={pending} />
         <button type="button" onClick={onCancel} disabled={pending} className={SECONDARY_BUTTON}>

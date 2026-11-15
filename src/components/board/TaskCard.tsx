@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { PriorityBadge } from "@/components/board/PriorityBadge";
 import { TaskDeleteConfirm } from "@/components/board/TaskDeleteConfirm";
 import { TaskEditForm } from "@/components/board/TaskEditForm";
 import { FOCUS_RING, GHOST_BUTTON } from "@/components/ui/button-styles";
@@ -59,7 +60,10 @@ export function TaskCard({ task, onStatusChange, onSaved, onDeleted }: TaskCardP
 
   return (
     <li className={CARD}>
-      <h3 className="text-sm font-medium break-words text-zinc-900">{task.title}</h3>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="min-w-0 text-sm font-medium break-words text-zinc-900">{task.title}</h3>
+        <PriorityBadge priority={task.priority} />
+      </div>
       {task.description ? <p className="mt-1 text-sm leading-relaxed break-words text-zinc-600">{task.description}</p> : null}
       {mode === "confirmingDelete" ? (
         <TaskDeleteConfirm task={task} onDeleted={onDeleted} onCancel={() => backToView("delete")} />

@@ -3,9 +3,9 @@ import { boardReducer, groupTasksByStatus, moveTask, type BoardState } from "@/l
 import type { Task } from "@/lib/tasks";
 
 const tasks: Task[] = [
-  { id: "a", projectId: "p", title: "A", status: "TODO" },
-  { id: "b", projectId: "p", title: "B", status: "IN_PROGRESS" },
-  { id: "c", projectId: "p", title: "C", status: "TODO" },
+  { id: "a", projectId: "p", title: "A", status: "TODO", priority: "MEDIUM" },
+  { id: "b", projectId: "p", title: "B", status: "IN_PROGRESS", priority: "MEDIUM" },
+  { id: "c", projectId: "p", title: "C", status: "TODO", priority: "MEDIUM" },
 ];
 
 describe("groupTasksByStatus", () => {
@@ -19,6 +19,23 @@ describe("groupTasksByStatus", () => {
 
   it("returns an empty group for every status when there are no tasks", () => {
     expect(groupTasksByStatus([])).toEqual({ TODO: [], IN_PROGRESS: [], DONE: [] });
+  });
+});
+
+describe("groupTasksByStatus: priority order", () => {
+  it("sorts each column High, then Medium, then Low, keeping the order of equal priorities", () => {
+    const mixed: Task[] = [
+      { id: "low", projectId: "p", title: "Low", status: "TODO", priority: "LOW" },
+      { id: "m1", projectId: "p", title: "M1", status: "TODO", priority: "MEDIUM" },
+      { id: "high", projectId: "p", title: "High", status: "TODO", priority: "HIGH" },
+      { id: "m2", projectId: "p", title: "M2", status: "TODO", priority: "MEDIUM" },
+      { id: "done", projectId: "p", title: "Done", status: "DONE", priority: "LOW" },
+    ];
+
+    const groups = groupTasksByStatus(mixed);
+
+    expect(groups.TODO.map((task) => task.id)).toEqual(["high", "m1", "m2", "low"]);
+    expect(groups.DONE.map((task) => task.id)).toEqual(["done"]);
   });
 });
 
@@ -67,7 +84,7 @@ describe("boardReducer", () => {
 
   it("keeps the moved card and takes the saved task from the server on success", () => {
     const started = boardReducer(initial, { type: "statusChangeStarted", taskId: "a", status: "DONE" });
-    const saved = { id: "a", projectId: "p", title: "A (saved)", status: "DONE" as const };
+    const saved = { id: "a", projectId: "p", title: "A (saved)", status: "DONE" as const, priority: "MEDIUM" as const };
     const state = boardReducer(started, { type: "statusChangeSucceeded", task: saved });
 
     expect(state.tasks[0]).toEqual(saved);
@@ -115,7 +132,7 @@ describe("boardReducer: creating, editing, and deleting tasks", () => {
   const initial: BoardState = { tasks, error: "Old error" };
 
   it("adds a created task at the end and clears the error", () => {
-    const created: Task = { id: "d", projectId: "p", title: "D", status: "TODO" };
+    const created: Task = { id: "d", projectId: "p", title: "D", status: "TODO", priority: "MEDIUM" };
     const state = boardReducer(initial, { type: "taskAdded", task: created });
 
     expect(state.tasks.map((task) => task.id)).toEqual(["a", "b", "c", "d"]);
@@ -123,7 +140,7 @@ describe("boardReducer: creating, editing, and deleting tasks", () => {
   });
 
   it("replaces an edited task in place", () => {
-    const edited: Task = { id: "b", projectId: "p", title: "B renamed", description: "Notes", status: "IN_PROGRESS" };
+    const edited: Task = { id: "b", projectId: "p", title: "B renamed", description: "Notes", status: "IN_PROGRESS", priority: "MEDIUM" };
     const state = boardReducer(initial, { type: "taskUpdated", task: edited });
 
     expect(state.tasks).toEqual([tasks[0], edited, tasks[2]]);
