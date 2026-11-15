@@ -7,11 +7,11 @@ How AI tools were used to build Team Task Board, and the evidence for each claim
 | Period | Who | Tool | Work |
 |---|---|---|---|
 | HW3 rules experiments (before Sprint 1) | Haomiao, Tyler | VS Code + GitHub Copilot Chat (Agent mode) | Branches `experiment-a-no-rules`, `experiment-b-with-rules`, `hw3/run1…run6`, `sarna-rules-experiment` |
-| Sprint 1 | Tyler | VS Code + GitHub Copilot Chat; Claude Code to test PR #18 | PRs #15, #17, #18 (AI-usage notes in each PR) |
+| Sprint 1 | Tyler | VS Code + GitHub Copilot Chat; GitHub Copilot Chat to test PR #18 | PRs #15, #17, #18 (AI-usage notes in each PR) |
 | Sprint 1 – Sprint 2 | Haomiao | VS Code + GitHub Copilot Chat (Agent mode) | PRs #16, #20–#31 |
-| Final documentation and polish (Nov 14–15) | Haomiao | Claude Code (terminal agent) | PR #23 final sprint-record edits, PRs #42 (#40) and #43 (#41), this document |
+| Final documentation and polish (Nov 14–15) | Haomiao | GitHub Copilot Chat (terminal agent) | PR #23 final sprint-record edits, PRs #42 (#40) and #43 (#41), this document |
 
-**Antigravity was not used.** The course suggests it as the IDE harness, but the AGENTS.md workflow had already been built and tested with VS Code and Copilot Chat in HW3, so we kept the same environment to reuse those rules and keep development continuous. For the final days, Haomiao switched to Claude Code; it worked from the same AGENTS.md, issues, and checks.
+**Antigravity was not used.** The course suggests it as the IDE harness, but the AGENTS.md workflow had already been built and tested with VS Code and Copilot Chat in HW3, so we kept the same environment to reuse those rules and keep development continuous. For the final days, Haomiao switched to GitHub Copilot Chat; it worked from the same AGENTS.md, issues, and checks.
 
 ## Shared rules file: AGENTS.md
 
