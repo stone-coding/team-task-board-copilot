@@ -352,6 +352,8 @@ describe("tasks API", () => {
       vi.spyOn(prisma.projectMember, "findUnique").mockRejectedValue(DB_ERROR);
       vi.spyOn(prisma.task, "updateMany").mockRejectedValue(DB_ERROR);
       vi.spyOn(prisma.task, "deleteMany").mockRejectedValue(DB_ERROR);
+      // Updates and deletes run in an interactive transaction (with their activity records), so the outage surfaces there.
+      vi.spyOn(prisma, "$transaction").mockRejectedValue(DB_ERROR);
 
       await expectInternalError(await listTasks(ada, adaProject.id));
       await expectInternalError(await createTask(ada, adaProject.id, { title: "Doomed" }));
