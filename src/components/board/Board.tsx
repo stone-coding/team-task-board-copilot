@@ -3,9 +3,11 @@
 import { useReducer } from "react";
 import { AddTaskForm } from "@/components/board/AddTaskForm";
 import { BoardColumn } from "@/components/board/BoardColumn";
+import { ProjectOverview } from "@/components/board/ProjectOverview";
 import { FormError } from "@/components/ui/FormError";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
 import { boardReducer, groupTasksByStatus } from "@/lib/board";
+import { summarizeTasks } from "@/lib/project-stats";
 import { TASK_STATUSES } from "@/lib/task-status";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
@@ -54,6 +56,7 @@ export function Board({ projectId, initialTasks }: BoardProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      <ProjectOverview stats={summarizeTasks(tasks)} />
       <AddTaskForm projectId={projectId} onCreated={(task) => dispatch({ type: "taskAdded", task })} />
       <FormError message={error} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
