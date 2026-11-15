@@ -116,8 +116,8 @@ describe("tasks API", () => {
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
         tasks: [
-          { id: expect.any(String), projectId: adaProject.id, title: "First", description: "Has notes", status: "TODO" },
-          { id: expect.any(String), projectId: adaProject.id, title: "Second", status: "IN_PROGRESS" },
+          { id: expect.any(String), projectId: adaProject.id, title: "First", description: "Has notes", status: "TODO", priority: "MEDIUM" },
+          { id: expect.any(String), projectId: adaProject.id, title: "Second", status: "IN_PROGRESS", priority: "MEDIUM" },
         ],
       });
     });
@@ -147,7 +147,7 @@ describe("tasks API", () => {
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body).toEqual({
-        task: { id: expect.any(String), projectId: adaProject.id, title: "Write release notes", description: "For v1", status: "TODO" },
+        task: { id: expect.any(String), projectId: adaProject.id, title: "Write release notes", description: "For v1", status: "TODO", priority: "MEDIUM" },
       });
       await expect(prisma.task.findUnique({ where: { id: body.task.id } })).resolves.toMatchObject({
         projectId: adaProject.id,
@@ -175,6 +175,21 @@ describe("tasks API", () => {
       expect(response.status).toBe(201);
     });
 
+    it("creates a task with Medium priority when none is sent", async () => {
+      const response = await createTask(ada, adaProject.id, { title: "Default priority" });
+      const body = await response.json();
+      expect(body.task.priority).toBe("MEDIUM");
+      await expect(prisma.task.findUnique({ where: { id: body.task.id } })).resolves.toMatchObject({ priority: "MEDIUM" });
+    });
+
+    it.each(["LOW", "HIGH"])("creates a task with priority %s", async (priority) => {
+      const response = await createTask(ada, adaProject.id, { title: "Prioritized", priority });
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body.task.priority).toBe(priority);
+      await expect(prisma.task.findUnique({ where: { id: body.task.id } })).resolves.toMatchObject({ priority });
+    });
+
     it("ignores a status in the create body", async () => {
       const response = await createTask(ada, adaProject.id, { title: "Starts in To Do", status: "DONE" });
       const body = await response.json();
@@ -189,6 +204,8 @@ describe("tasks API", () => {
       ["a title over 120 characters", { title: "a".repeat(121) }, "Task title must be at most 120 characters"],
       ["a description over 2000 characters", { title: "Ok", description: "a".repeat(2001) }, "Task description must be at most 2000 characters"],
       ["a malformed JSON body", "{not json", "Task title is required"],
+      ["an unknown priority", { title: "Ok", priority: "URGENT" }, "Priority must be one of LOW, MEDIUM, HIGH"],
+      ["a lowercase priority", { title: "Ok", priority: "high" }, "Priority must be one of LOW, MEDIUM, HIGH"],
     ])("rejects %s with 400 VALIDATION_ERROR", async (_label, body, message) => {
       const response = await createTask(ada, adaProject.id, body);
       expect(response.status).toBe(400);
@@ -210,9 +227,30 @@ describe("tasks API", () => {
       const response = await updateTask(ada, task.id, { status: "IN_PROGRESS" });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
-        task: { id: task.id, projectId: adaProject.id, title: "Move me", status: "IN_PROGRESS" },
+        task: { id: task.id, projectId: adaProject.id, title: "Move me", status: "IN_PROGRESS", priority: "MEDIUM" },
       });
       await expect(prisma.task.findUnique({ where: { id: task.id } })).resolves.toMatchObject({ status: "IN_PROGRESS" });
+    });
+
+    it("changes only the priority and returns it", async () => {
+      const task = await seedTask(adaProject.id, "Raise me", { status: "IN_PROGRESS" });
+      const response = await updateTask(ada, task.id, { priority: "HIGH" });
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toEqual({
+        task: { id: task.id, projectId: adaProject.id, title: "Raise me", status: "IN_PROGRESS", priority: "HIGH" },
+      });
+      await expect(prisma.task.findUnique({ where: { id: task.id } })).resolves.toMatchObject({
+        priority: "HIGH",
+        status: "IN_PROGRESS",
+      });
+    });
+
+    it("returns 404 when changing the priority of another user's task and keeps it", async () => {
+      const task = await seedTask(graceProject.id, "Grace's task");
+      const response = await updateTask(ada, task.id, { priority: "LOW" });
+      expect(response.status).toBe(404);
+      await expect(response.json()).resolves.toEqual(TASK_NOT_FOUND);
+      await expect(prisma.task.findUnique({ where: { id: task.id } })).resolves.toMatchObject({ priority: "MEDIUM" });
     });
 
     it("edits the title and description and leaves the status alone", async () => {
@@ -220,7 +258,7 @@ describe("tasks API", () => {
       const response = await updateTask(ada, task.id, { title: "  New title ", description: "New notes" });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
-        task: { id: task.id, projectId: adaProject.id, title: "New title", description: "New notes", status: "DONE" },
+        task: { id: task.id, projectId: adaProject.id, title: "New title", description: "New notes", status: "DONE", priority: "MEDIUM" },
       });
     });
 
@@ -236,11 +274,12 @@ describe("tasks API", () => {
     });
 
     it.each([
-      ["an empty body", {}, "Provide at least one of title, description, or status"],
+      ["an empty body", {}, "Provide at least one of title, description, status, or priority"],
       ["an unknown status", { status: "BLOCKED" }, "Status must be one of TODO, IN_PROGRESS, DONE"],
+      ["an unknown priority", { priority: "URGENT" }, "Priority must be one of LOW, MEDIUM, HIGH"],
       ["an empty title", { title: " " }, "Task title is required"],
       ["a title over 120 characters", { title: "a".repeat(121) }, "Task title must be at most 120 characters"],
-      ["a malformed JSON body", "{not json", "Provide at least one of title, description, or status"],
+      ["a malformed JSON body", "{not json", "Provide at least one of title, description, status, or priority"],
     ])("rejects %s with 400 VALIDATION_ERROR and keeps the task", async (_label, body, message) => {
       const task = await seedTask(adaProject.id, "Unchanged");
       const response = await updateTask(ada, task.id, body);

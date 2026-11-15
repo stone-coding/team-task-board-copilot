@@ -72,6 +72,23 @@ describe("OpenAPI spec (docs/api/openapi.yaml)", () => {
     });
   });
 
+  it("documents task priority on the Task schema and in the create and update bodies", () => {
+    const priorityRef = { $ref: "#/components/schemas/TaskPriority" };
+    expect(spec.components.schemas.TaskPriority).toEqual({ type: "string", enum: ["LOW", "MEDIUM", "HIGH"] });
+    expect(spec.components.schemas.Task).toMatchObject({
+      required: ["id", "projectId", "title", "status", "priority"],
+      properties: { priority: priorityRef },
+    });
+    expect(spec.paths).toMatchObject({
+      "/projects/{projectId}/tasks": {
+        post: { requestBody: { content: { "application/json": { schema: { properties: { priority: priorityRef } } } } } },
+      },
+      "/tasks/{taskId}": {
+        patch: { requestBody: { content: { "application/json": { schema: { properties: { priority: priorityRef } } } } } },
+      },
+    });
+  });
+
   it("lists a success response for every operation and 401 for every protected one", () => {
     for (const [specPath, item] of Object.entries(spec.paths)) {
       for (const method of HTTP_METHODS.map((name) => name.toLowerCase()).filter((name) => name in item)) {

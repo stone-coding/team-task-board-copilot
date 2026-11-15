@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { TaskCard } from "@/components/board/TaskCard";
 import type { Task } from "@/lib/tasks";
 
-const task: Task = { id: "t1", projectId: "p1", title: "Write release notes", description: "For v1", status: "TODO" };
+const task: Task = { id: "t1", projectId: "p1", title: "Write release notes", description: "For v1", status: "TODO", priority: "HIGH" };
 
 function mockFetch(status: number, body?: unknown) {
   const fetchMock = vi.fn().mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
@@ -21,6 +21,42 @@ function renderCard(overrides: { onSaved?: (task: Task) => void; onDeleted?: (ta
   );
   return props;
 }
+
+describe("TaskCard priority", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("shows the priority as a text badge", () => {
+    renderCard();
+
+    expect(screen.getByText("High priority")).toBeInTheDocument();
+  });
+
+  it("opens the edit form with the task's priority selected", async () => {
+    const user = userEvent.setup();
+    renderCard();
+
+    await user.click(screen.getByRole("button", { name: "Edit Write release notes" }));
+
+    expect(screen.getByRole("combobox", { name: "Priority" })).toHaveValue("HIGH");
+  });
+
+  it("saves a changed priority with PATCH", async () => {
+    const fetchMock = mockFetch(200, { task: { ...task, priority: "LOW" } });
+    const user = userEvent.setup();
+    const { onSaved } = renderCard();
+
+    await user.click(screen.getByRole("button", { name: "Edit Write release notes" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Priority" }), "Low");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks/t1", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "Write release notes", description: "For v1", priority: "LOW" }),
+    });
+    expect(onSaved).toHaveBeenCalledWith({ ...task, priority: "LOW" });
+  });
+});
 
 describe("TaskCard editing", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -39,7 +75,7 @@ describe("TaskCard editing", () => {
 
   it("saves the edited title and description with PATCH and reports the saved task", async () => {
     const saved = { ...task, title: "Write the release notes", description: "" };
-    const fetchMock = mockFetch(200, { task: { id: "t1", projectId: "p1", title: "Write the release notes", status: "TODO" } });
+    const fetchMock = mockFetch(200, { task: { id: "t1", projectId: "p1", title: "Write the release notes", status: "TODO", priority: "HIGH" } });
     const user = userEvent.setup();
     const { onSaved } = renderCard();
 
@@ -52,9 +88,9 @@ describe("TaskCard editing", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/v1/tasks/t1", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: "Write the release notes", description: "" }),
+      body: JSON.stringify({ title: "Write the release notes", description: "", priority: "HIGH" }),
     });
-    expect(onSaved).toHaveBeenCalledWith({ id: "t1", projectId: "p1", title: "Write the release notes", status: "TODO" });
+    expect(onSaved).toHaveBeenCalledWith({ id: "t1", projectId: "p1", title: "Write the release notes", status: "TODO", priority: "HIGH" });
   });
 
   it("announces an empty title without calling the API", async () => {

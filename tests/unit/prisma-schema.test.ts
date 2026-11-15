@@ -45,6 +45,12 @@ describe("Prisma PostgreSQL schema", () => {
     ]);
   });
 
+  it("defines the task priorities from lowest to highest", () => {
+    const schema = readFileSync(schemaPath, "utf8");
+
+    expect(getBlock(schema, "enum", "TaskPriority")).toEqual(["LOW", "MEDIUM", "HIGH"]);
+  });
+
   it("defines every User field and its unique email constraint", () => {
     const fields = getBlock(
       readFileSync(schemaPath, "utf8"),
@@ -90,6 +96,7 @@ describe("Prisma PostgreSQL schema", () => {
     expectDeclaration(fields, "title String");
     expectDeclaration(fields, "description String?");
     expectDeclaration(fields, "status TaskStatus @default(TODO)");
+    expectDeclaration(fields, "priority TaskPriority @default(MEDIUM)");
     expectDeclaration(fields, "createdAt DateTime @default(now())");
     expectDeclaration(fields, "updatedAt DateTime @updatedAt");
     expectDeclaration(
