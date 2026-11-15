@@ -13,6 +13,12 @@ function count(columnName: string, value: number) {
   return within(column(columnName)).getByText(String(value));
 }
 
+// Each overview stat is a <dt> label followed by its <dd> value.
+function overviewStat(label: string) {
+  return within(screen.getByRole("group", { name: "Project overview" })).getByText(label, { selector: "dt" })
+    .nextElementSibling;
+}
+
 // Answers each PATCH with the task it was asked to save, as the API does.
 function saveSucceeds() {
   return vi.fn(async (url: string, init: RequestInit) => {
@@ -217,6 +223,63 @@ describe("Board", () => {
 
     expect(await within(column("In Progress")).findByRole("heading", { name: "Set up the repository" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Status for Set up the repository" })).toHaveValue("IN_PROGRESS");
+  });
+
+  it("shows a project overview derived from the board's tasks", () => {
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    expect(overviewStat("Total tasks")).toHaveTextContent(/^5$/);
+    expect(overviewStat("In progress")).toHaveTextContent(/^2$/);
+    expect(overviewStat("Completed")).toHaveTextContent(/^0$/);
+    expect(overviewStat("Completion rate")).toHaveTextContent(/^0%$/);
+  });
+
+  it("updates the overview as soon as a card moves to Done", async () => {
+    let finishSave: (response: Response) => void = () => undefined;
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>((resolve) => (finishSave = resolve))));
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Set up project repository" }), "Done");
+
+    expect(overviewStat("In progress")).toHaveTextContent(/^1$/);
+    expect(overviewStat("Completed")).toHaveTextContent(/^1$/);
+    expect(overviewStat("Completion rate")).toHaveTextContent(/^20%$/);
+    expect(screen.getByRole("progressbar", { name: "Completion rate" })).toHaveAttribute("value", "1");
+    finishSave(new Response(JSON.stringify({ task: { ...mockTasks[3], status: "DONE" } }), { status: 200 }));
+    await waitFor(() => expect(overviewStat("Completed")).toHaveTextContent(/^1$/));
+  });
+
+  it("restores the overview when a status change is rolled back", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "Task not found" } }), { status: 404 })),
+    );
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status for Draft onboarding checklist" }), "Done");
+
+    await screen.findByRole("alert");
+    expect(overviewStat("Completed")).toHaveTextContent(/^0$/);
+    expect(overviewStat("Completion rate")).toHaveTextContent(/^0%$/);
+  });
+
+  it("counts added and deleted tasks in the overview", async () => {
+    const created = { id: "t9", projectId: "demo", title: "Plan launch", status: "TODO" };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ task: created }), { status: 201 })));
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={mockTasks} />);
+
+    await user.type(screen.getByRole("textbox", { name: "Title" }), "Plan launch");
+    await user.click(screen.getByRole("button", { name: "Add task" }));
+    await waitFor(() => expect(overviewStat("Total tasks")).toHaveTextContent(/^6$/));
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
+    await user.click(screen.getByRole("button", { name: "Delete Review sprint backlog" }));
+    await user.click(screen.getByRole("button", { name: "Confirm delete Review sprint backlog" }));
+    await waitFor(() => expect(overviewStat("Total tasks")).toHaveTextContent(/^5$/));
+    expect(overviewStat("In progress")).toHaveTextContent(/^1$/);
   });
 
   it("removes a deleted card and updates the count", async () => {
