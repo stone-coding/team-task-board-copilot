@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { ProjectMemberInfo } from "@/lib/projects";
 import { prisma } from "@/server/db";
+import { recordActivity } from "@/server/services/activity";
 import { getRole } from "@/server/services/memberships";
 
 const MEMBER_SELECT = { role: true, user: { select: { id: true, name: true, email: true } } } as const;
@@ -45,8 +46,12 @@ export async function addMember(actorId: string, projectId: string, email: strin
     return { kind: "no_account" };
   }
   try {
-    const row = await prisma.projectMember.create({ data: { projectId, userId: user.id, role: "MEMBER" }, select: MEMBER_SELECT });
-    return { kind: "added", member: toMember(row) };
+    const member = await prisma.$transaction(async (tx) => {
+      const row = await tx.projectMember.create({ data: { projectId, userId: user.id, role: "MEMBER" }, select: MEMBER_SELECT });
+      await recordActivity(tx, { projectId, actorId, type: "MEMBER_ADDED", subjectName: row.user.name });
+      return toMember(row);
+    });
+    return { kind: "added", member };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return { kind: "already_member" };
@@ -73,10 +78,19 @@ export async function removeMember(actorId: string, projectId: string, targetUse
   if (target === "OWNER") {
     return "owner";
   }
-  // Their tasks in this project become unassigned in the same transaction, so no task points at a nonmember.
-  await prisma.$transaction([
-    prisma.task.updateMany({ where: { projectId, assigneeId: targetUserId }, data: { assigneeId: null } }),
-    prisma.projectMember.delete({ where: { projectId_userId: { projectId, userId: targetUserId } } }),
-  ]);
+  // Their tasks in this project become unassigned, and the event is recorded, in the same transaction.
+  await prisma.$transaction(async (tx) => {
+    await tx.task.updateMany({ where: { projectId, assigneeId: targetUserId }, data: { assigneeId: null } });
+    const removed = await tx.projectMember.delete({
+      where: { projectId_userId: { projectId, userId: targetUserId } },
+      select: { user: { select: { name: true } } },
+    });
+    await recordActivity(
+      tx,
+      actorId === targetUserId
+        ? { projectId, actorId, type: "MEMBER_LEFT" }
+        : { projectId, actorId, type: "MEMBER_REMOVED", subjectName: removed.user.name },
+    );
+  });
   return "removed";
 }

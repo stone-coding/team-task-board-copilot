@@ -24,6 +24,19 @@ enum ProjectRole {
   MEMBER
 }
 
+enum ActivityType {
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_MOVED
+  TASK_ASSIGNED
+  TASK_DELETED
+  COMMENT_ADDED
+  COMMENT_DELETED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  MEMBER_LEFT
+}
+
 model User {
   id            String          @id @default(cuid())
   email         String          @unique
@@ -34,6 +47,7 @@ model User {
   memberships   ProjectMember[]
   assignedTasks Task[]
   comments      Comment[]
+  activity      Activity[]
 }
 
 model Project {
@@ -44,6 +58,7 @@ model Project {
   owner     User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   tasks     Task[]
   members   ProjectMember[]
+  activity  Activity[]
 }
 
 // Access to a project and its tasks comes only from a membership row; the creator gets the OWNER row.
@@ -87,4 +102,23 @@ model Comment {
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([taskId, createdAt])
+}
+
+// One row per change, written in the same transaction as the change. Task details are copied so the history
+// still reads correctly after the task is renamed or deleted (taskId is deliberately not a foreign key).
+model Activity {
+  id          String       @id @default(cuid())
+  projectId   String
+  actorId     String
+  type        ActivityType
+  taskId      String?
+  taskTitle   String?
+  fromStatus  TaskStatus?
+  toStatus    TaskStatus?
+  subjectName String?
+  createdAt   DateTime     @default(now())
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor       User         @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
 }

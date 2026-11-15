@@ -79,6 +79,28 @@ components:
           properties:
             userId: { type: string }
             name: { type: string }
+    ActivityType:
+      type: string
+      enum: [TASK_CREATED, TASK_UPDATED, TASK_MOVED, TASK_ASSIGNED, TASK_DELETED, COMMENT_ADDED, COMMENT_DELETED, MEMBER_ADDED, MEMBER_REMOVED, MEMBER_LEFT]
+    Activity:
+      type: object
+      description: One project event. Optional fields are omitted when empty; task details are copied at the time of the event.
+      required: [id, type, createdAt, actor]
+      properties:
+        id: { type: string }
+        type: { $ref: "#/components/schemas/ActivityType" }
+        createdAt: { type: string, format: date-time }
+        actor:
+          type: object
+          required: [userId, name]
+          properties:
+            userId: { type: string }
+            name: { type: string }
+        taskId: { type: string, description: The task's id at the time (the task may since be deleted) }
+        taskTitle: { type: string }
+        fromStatus: { $ref: "#/components/schemas/TaskStatus" }
+        toStatus: { $ref: "#/components/schemas/TaskStatus" }
+        subjectName: { type: string, description: The assignee (TASK_ASSIGNED) or the member added or removed }
     TaskResponse:
       type: object
       required: [task]
@@ -347,6 +369,28 @@ paths:
         "409":
           description: The OWNER cannot be removed (code `CONFLICT`).
           content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
+        "500": { $ref: "#/components/responses/InternalError" }
+  /projects/{projectId}/activity:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      operationId: listActivity
+      summary: The project's 50 newest activity events, newest first
+      description: >
+        Members only. Every task, comment, and membership change records an event in the same database transaction
+        as the change, so an event exists exactly when its change was saved.
+      responses:
+        "200":
+          description: The events.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [activity]
+                properties:
+                  activity: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/Activity" } }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "404": { $ref: "#/components/responses/ProjectNotFound" }
         "500": { $ref: "#/components/responses/InternalError" }
   /projects/{projectId}/tasks:
     parameters:
