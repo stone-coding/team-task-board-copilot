@@ -1,13 +1,15 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { AddTaskForm } from "@/components/board/AddTaskForm";
 import { BoardColumn } from "@/components/board/BoardColumn";
 import { ProjectOverview } from "@/components/board/ProjectOverview";
+import { TaskFilters } from "@/components/board/TaskFilters";
 import { FormError } from "@/components/ui/FormError";
 import { GENERIC_ERROR_MESSAGE, readApiErrorMessage } from "@/lib/api-error";
 import { boardReducer, groupTasksByStatus } from "@/lib/board";
 import { summarizeTasks } from "@/lib/project-stats";
+import { EMPTY_FILTERS, filterTasks, hasActiveFilters } from "@/lib/task-filters";
 import { TASK_STATUSES } from "@/lib/task-status";
 import type { Task, TaskStatus } from "@/lib/tasks";
 
@@ -31,7 +33,10 @@ async function saveStatus(taskId: string, status: TaskStatus): Promise<Task> {
 
 export function Board({ projectId, initialTasks }: BoardProps) {
   const [{ tasks, error }, dispatch] = useReducer(boardReducer, { tasks: initialTasks, error: null });
-  const tasksByStatus = groupTasksByStatus(tasks);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const visibleTasks = filterTasks(tasks, filters);
+  const tasksByStatus = groupTasksByStatus(visibleTasks);
+  const emptyMessage = hasActiveFilters(filters) ? "No matching tasks" : "No tasks yet";
 
   async function handleStatusChange(taskId: string, status: TaskStatus) {
     const task = tasks.find((candidate) => candidate.id === taskId);
@@ -59,12 +64,14 @@ export function Board({ projectId, initialTasks }: BoardProps) {
       <ProjectOverview stats={summarizeTasks(tasks)} />
       <AddTaskForm projectId={projectId} onCreated={(task) => dispatch({ type: "taskAdded", task })} />
       <FormError message={error} />
+      <TaskFilters filters={filters} onChange={setFilters} shown={visibleTasks.length} total={tasks.length} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {TASK_STATUSES.map((status) => (
           <BoardColumn
             key={status}
             status={status}
             tasks={tasksByStatus[status]}
+            emptyMessage={emptyMessage}
             onStatusChange={handleStatusChange}
             onTaskSaved={(task) => dispatch({ type: "taskUpdated", task })}
             onTaskDeleted={(taskId) => dispatch({ type: "taskRemoved", taskId })}
