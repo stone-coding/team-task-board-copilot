@@ -75,6 +75,22 @@ describe("Prisma PostgreSQL schema", () => {
 
     expectDeclaration(getBlock(schema, "model", "User"), "memberships ProjectMember[]");
     expectDeclaration(getBlock(schema, "model", "User"), "assignedTasks Task[]");
+  });
+
+  it("defines Comment with cascading task and author relations and a (taskId, createdAt) index", () => {
+    const schema = readFileSync(schemaPath, "utf8");
+    const fields = getBlock(schema, "model", "Comment");
+
+    expectDeclaration(fields, "id String @id @default(cuid())");
+    expectDeclaration(fields, "taskId String");
+    expectDeclaration(fields, "authorId String");
+    expectDeclaration(fields, "body String");
+    expectDeclaration(fields, "createdAt DateTime @default(now())");
+    expectDeclaration(fields, "task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "author User @relation(fields: [authorId], references: [id], onDelete: Cascade)");
+    expectDeclaration(fields, "@@index([taskId, createdAt])");
+    expectDeclaration(getBlock(schema, "model", "Task"), "comments Comment[]");
+    expectDeclaration(getBlock(schema, "model", "User"), "comments Comment[]");
     expectDeclaration(getBlock(schema, "model", "Project"), "members ProjectMember[]");
   });
 
