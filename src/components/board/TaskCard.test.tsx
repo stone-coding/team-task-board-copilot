@@ -22,6 +22,68 @@ function renderCard(overrides: { onSaved?: (task: Task) => void; onDeleted?: (ta
   return props;
 }
 
+describe("TaskCard assignee", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const MEMBERS = [
+    { userId: "u1", name: "Olivia", email: "olivia@example.com", role: "OWNER" as const },
+    { userId: "u2", name: "Mason", email: "mason@example.com", role: "MEMBER" as const },
+  ];
+
+  function renderWith(card: Task) {
+    render(
+      <ul>
+        <TaskCard task={card} members={MEMBERS} onStatusChange={vi.fn()} onSaved={vi.fn()} onDeleted={vi.fn()} />
+      </ul>,
+    );
+    return userEvent.setup();
+  }
+
+  it("shows who the task is assigned to, or Unassigned", () => {
+    renderWith({ ...task, assignee: { userId: "u2", name: "Mason" } });
+    expect(screen.getByText("Assigned to Mason")).toBeInTheDocument();
+  });
+
+  it("shows Unassigned when nobody is assigned", () => {
+    renderWith(task);
+    expect(screen.getByText("Unassigned")).toBeInTheDocument();
+  });
+
+  it("edits the assignee with a select of members and saves it with PATCH", async () => {
+    const fetchMock = mockFetch(200, { task: { ...task, assignee: { userId: "u1", name: "Olivia" } } });
+    const user = renderWith({ ...task, assignee: { userId: "u2", name: "Mason" } });
+
+    await user.click(screen.getByRole("button", { name: "Edit Write release notes" }));
+    const assignee = screen.getByRole("combobox", { name: "Assignee" });
+    expect(assignee).toHaveValue("u2");
+    await user.selectOptions(assignee, "Olivia");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/tasks/t1",
+      expect.objectContaining({
+        body: JSON.stringify({ title: "Write release notes", description: "For v1", priority: "HIGH", assigneeId: "u1" }),
+      }),
+    );
+  });
+
+  it("sends null to unassign", async () => {
+    const fetchMock = mockFetch(200, { task });
+    const user = renderWith({ ...task, assignee: { userId: "u2", name: "Mason" } });
+
+    await user.click(screen.getByRole("button", { name: "Edit Write release notes" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Assignee" }), "Unassigned");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v1/tasks/t1",
+      expect.objectContaining({
+        body: JSON.stringify({ title: "Write release notes", description: "For v1", priority: "HIGH", assigneeId: null }),
+      }),
+    );
+  });
+});
+
 describe("TaskCard priority", () => {
   afterEach(() => vi.unstubAllGlobals());
 

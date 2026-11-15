@@ -3,6 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { TaskFilters } from "@/components/board/TaskFilters";
 import { EMPTY_FILTERS } from "@/lib/task-filters";
+import type { ProjectMemberInfo } from "@/lib/projects";
+
+const MEMBERS: ProjectMemberInfo[] = [
+  { userId: "u1", name: "Olivia", email: "olivia@example.com", role: "OWNER" },
+  { userId: "u2", name: "Mason", email: "mason@example.com", role: "MEMBER" },
+];
 
 function filters() {
   return screen.getByRole("search", { name: "Filter tasks" });
@@ -41,7 +47,28 @@ describe("TaskFilters", () => {
 
     await userEvent.setup().selectOptions(screen.getByRole("combobox", { name: "Filter by priority" }), "High");
 
-    expect(onChange).toHaveBeenCalledWith({ query: "", status: "ALL", priority: "HIGH" });
+    expect(onChange).toHaveBeenCalledWith({ query: "", status: "ALL", priority: "HIGH", assignee: "ALL" });
+  });
+
+  it("has no assignee filter without members", () => {
+    render(<TaskFilters filters={EMPTY_FILTERS} onChange={vi.fn()} shown={5} total={5} />);
+
+    expect(screen.queryByRole("combobox", { name: "Filter by assignee" })).not.toBeInTheDocument();
+  });
+
+  it("offers All, Unassigned, and each member as assignee filters and reports the choice", async () => {
+    const onChange = vi.fn();
+    render(<TaskFilters filters={EMPTY_FILTERS} onChange={onChange} shown={5} total={5} members={MEMBERS} />);
+
+    const assignee = screen.getByRole("combobox", { name: "Filter by assignee" });
+    expect(within(assignee).getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "All assignees",
+      "Unassigned",
+      "Olivia",
+      "Mason",
+    ]);
+    await userEvent.setup().selectOptions(assignee, "Mason");
+    expect(onChange).toHaveBeenCalledWith({ query: "", status: "ALL", priority: "ALL", assignee: "u2" });
   });
 
   it("disables Clear filters and shows no count when no filter is active", () => {
@@ -52,7 +79,7 @@ describe("TaskFilters", () => {
   });
 
   it("shows how many tasks match while a filter is active", () => {
-    render(<TaskFilters filters={{ query: "notes", status: "ALL", priority: "ALL" }} onChange={vi.fn()} shown={2} total={5} />);
+    render(<TaskFilters filters={{ query: "notes", status: "ALL", priority: "ALL", assignee: "ALL" }} onChange={vi.fn()} shown={2} total={5} />);
 
     expect(screen.getByRole("status")).toHaveTextContent("Showing 2 of 5 tasks");
     expect(screen.getByRole("button", { name: "Clear filters" })).toBeEnabled();
@@ -64,15 +91,15 @@ describe("TaskFilters", () => {
     render(<TaskFilters filters={EMPTY_FILTERS} onChange={onChange} shown={5} total={5} />);
 
     await user.type(screen.getByRole("searchbox", { name: "Search tasks" }), "x");
-    expect(onChange).toHaveBeenLastCalledWith({ query: "x", status: "ALL", priority: "ALL" });
+    expect(onChange).toHaveBeenLastCalledWith({ query: "x", status: "ALL", priority: "ALL", assignee: "ALL" });
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Filter by status" }), "Done");
-    expect(onChange).toHaveBeenLastCalledWith({ query: "", status: "DONE", priority: "ALL" });
+    expect(onChange).toHaveBeenLastCalledWith({ query: "", status: "DONE", priority: "ALL", assignee: "ALL" });
   });
 
   it("clears both filters", async () => {
     const onChange = vi.fn();
-    render(<TaskFilters filters={{ query: "notes", status: "TODO", priority: "HIGH" }} onChange={onChange} shown={1} total={5} />);
+    render(<TaskFilters filters={{ query: "notes", status: "TODO", priority: "HIGH", assignee: "ALL" }} onChange={onChange} shown={1} total={5} />);
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Clear filters" }));
 

@@ -447,3 +447,42 @@ describe("Board: priority", () => {
     expect(overviewStat("Total tasks")).toHaveTextContent(/^4$/);
   });
 });
+
+describe("Board: assignees", () => {
+  beforeEach(() => vi.stubGlobal("fetch", saveSucceeds()));
+  afterEach(() => vi.unstubAllGlobals());
+
+  const members = [
+    { userId: "u1", name: "Olivia", email: "olivia@example.com", role: "OWNER" as const },
+    { userId: "u2", name: "Mason", email: "mason@example.com", role: "MEMBER" as const },
+  ];
+  const assigned: Task[] = [
+    { id: "a1", projectId: "demo", title: "Write copy", status: "TODO", priority: "MEDIUM", assignee: { userId: "u2", name: "Mason" } },
+    { id: "a2", projectId: "demo", title: "Book venue", status: "TODO", priority: "MEDIUM" },
+    { id: "a3", projectId: "demo", title: "Plan budget", status: "IN_PROGRESS", priority: "MEDIUM", assignee: { userId: "u1", name: "Olivia" } },
+  ];
+
+  it("shows each card's assignee", () => {
+    render(<Board projectId="demo" initialTasks={assigned} members={members} />);
+
+    expect(within(column("To Do")).getByText("Assigned to Mason")).toBeInTheDocument();
+    expect(within(column("To Do")).getByText("Unassigned")).toBeInTheDocument();
+    expect(within(column("In Progress")).getByText("Assigned to Olivia")).toBeInTheDocument();
+  });
+
+  it("filters by assignee, including Unassigned, and Clear filters resets it", async () => {
+    const user = userEvent.setup();
+    render(<Board projectId="demo" initialTasks={assigned} members={members} />);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by assignee" }), "Mason");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(["Write copy"]);
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Filter by assignee" }), "Unassigned");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(["Book venue"]);
+    expect(overviewStat("Total tasks")).toHaveTextContent(/^3$/);
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByRole("combobox", { name: "Filter by assignee" })).toHaveValue("ALL");
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3);
+  });
+});

@@ -274,12 +274,12 @@ describe("tasks API", () => {
     });
 
     it.each([
-      ["an empty body", {}, "Provide at least one of title, description, status, or priority"],
+      ["an empty body", {}, "Provide at least one of title, description, status, priority, or assigneeId"],
       ["an unknown status", { status: "BLOCKED" }, "Status must be one of TODO, IN_PROGRESS, DONE"],
       ["an unknown priority", { priority: "URGENT" }, "Priority must be one of LOW, MEDIUM, HIGH"],
       ["an empty title", { title: " " }, "Task title is required"],
       ["a title over 120 characters", { title: "a".repeat(121) }, "Task title must be at most 120 characters"],
-      ["a malformed JSON body", "{not json", "Provide at least one of title, description, status, or priority"],
+      ["a malformed JSON body", "{not json", "Provide at least one of title, description, status, priority, or assigneeId"],
     ])("rejects %s with 400 VALIDATION_ERROR and keeps the task", async (_label, body, message) => {
       const task = await seedTask(adaProject.id, "Unchanged");
       const response = await updateTask(ada, task.id, body);
